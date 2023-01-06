@@ -2,7 +2,7 @@ import sqlite3
 from socket import socket, gethostbyname, AF_INET, SOCK_DGRAM
 
 
-def send_message(recipient='CADD-7', message="Hello World!"):
+def send_message(recipient='CADD-7', message=b"Hello World!"):
     recipient = 'CADD-7'  # Server ip
     port = 4000
 
@@ -10,8 +10,8 @@ def send_message(recipient='CADD-7', message="Hello World!"):
     mySocket.connect((recipient, port))
 
     while True:
-        mySocket.send(b'cool')
-        break
+        mySocket.send(message)
+        #break
 
 if __name__ == '__main__':
     send_message('PyCharm')
