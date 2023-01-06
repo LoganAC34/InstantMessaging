@@ -1,18 +1,16 @@
-import sqlite3
-from socket import socket, gethostbyname, AF_INET, SOCK_DGRAM
+import socket, time, os, random
 
 
-def send_message(recipient='CADD-7', message=b"Hello World!"):
-    recipient = 'CADD-7'  # Server ip
-    port = 4000
+class Server():
+    def __init__(self, Address=('', 5000), MaxClient=1):
+        self.s = socket.socket()
+        self.s.bind(Address)
+        self.s.listen(MaxClient)
 
-    mySocket = socket(AF_INET, SOCK_DGRAM)
-    mySocket.connect((recipient, port))
+    def WaitForConnection(self):
+        self.Client, self.Adr = (self.s.accept())
+        print('Got a connection from: ' + str(self.Client) + '.')
 
-    while True:
-        mySocket.send(message)
-        #break
 
-if __name__ == '__main__':
-    send_message('PyCharm')
-
+s = Server()
+s.WaitForConnection()
