@@ -10,7 +10,7 @@ class MyFrame(wx.Frame):
         super().__init__(parent=None, title=f'Chatting with {name}')
 
         # Remember window size and position
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        self.Bind(wx.EVT_CLOSE, self.on_close)
         self._persistMgr = PM.PersistenceManager.Get()
         _configFile = os.path.join(os.getcwd(), "persist-saved-cfg")  # getname()
         self._persistMgr.SetPersistenceFile(_configFile)
@@ -29,8 +29,8 @@ class MyFrame(wx.Frame):
         self.my_btn.Bind(wx.EVT_BUTTON, self.send_message)  # Even bind
 
         # Message box
-        self.text_ctrl = wx.TextCtrl(panel)
-        self.text_ctrl.Bind(wx.KeyEvent(), self.send_message)
+        self.text_ctrl = wx.TextCtrl(style=wx.TE_PROCESS_ENTER | wx.TE_MULTILINE, parent=panel)
+        self.text_ctrl.Bind(wx.EVT_TEXT_ENTER, self.key_code)
 
         # Add to boxes and sizer
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -45,9 +45,9 @@ class MyFrame(wx.Frame):
 
     def append_chat(self, msg):
         chatHistory.append(msg)
-        chatHistory_Display = ""
+        chatHistory_Display = ''
         for message in chatHistory:
-            chatHistory_Display += message + "\n"
+            chatHistory_Display += message + '\n'
         self.chat_box.SetLabel(chatHistory_Display)
 
     def send_message(self, event):
@@ -57,7 +57,13 @@ class MyFrame(wx.Frame):
             self.append_chat(value)
             self.text_ctrl.Clear()
 
-    def OnClose(self, event):
+    def key_code(self, event):
+        if wx.KeyboardState.ShiftDown:
+            self.text_ctrl.WriteText('\n')
+        else:
+            self.send_message(self)
+
+    def on_close(self, event):
         self._persistMgr.SaveAndUnregister()
         event.Skip()
 
