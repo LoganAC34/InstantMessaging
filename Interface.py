@@ -1,12 +1,90 @@
-import wx, os
+import socket
+from threading import Thread
+
+import wx
+import os
 import wx.lib.agw.persist as PM
 
+# from Server import WorkerThread
+
 chatHistory = []
+user = "Logan"
+name = 'Tyler'
+
+# Define notification event for thread completion
+EVT_RESULT_ID = wx.ID_ANY
 
 
+def EVT_RESULT(win, func):
+    # Define Result Event.
+    win.Connect(-1, -1, EVT_RESULT_ID, func)
+
+
+class ResultEvent(wx.PyEvent):
+    # Simple event to carry arbitrary result data.
+    def __init__(self, data):
+        # Init Result Event.
+        wx.PyEvent.__init__(self)
+        self.SetEventType(EVT_RESULT_ID)
+        self.data = data
+
+# SERVER ----------------------------------------------------------------------------------------
+class WorkerThread(Thread):
+    """Worker Thread Class."""
+    print("Server Started")
+
+    def __init__(self, notify_window):
+        """Init Worker Thread Class."""
+        Thread.__init__(self)
+        self._notify_window = notify_window
+        self._want_abort = 0
+        # This starts the thread running on creation, but you could
+        # also make the GUI thread responsible for calling this
+        self.start()
+
+    def run(self):
+        """Run Worker Thread."""
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        ip = socket.gethostbyname('CADD-13')
+        port = 3434
+        print(ip)
+        try:
+            server.bind((ip, port))
+        except:
+            print("Bind failed")
+        else:
+            print("Bind successful")
+        server.listen(5)
+        clientsocket = None
+        while True:
+            if clientsocket is None:
+                print("[Waiting for connection..]")
+                (clientsocket, address) = server.accept()
+                print("Client accepted from", address)
+                msg = "pong"
+                clientsocket.send(msg.encode("UTF-8"))
+            else:
+                print("[Waiting for response...]")
+                msg = clientsocket.recv(1024)
+                msg = msg.decode("UTF-8")
+                print(msg)
+                wx.PostEvent(self._notify_window, ResultEvent(msg))  # Here's where the result would be returned
+
+            if self._want_abort:
+                # Use a result of None to acknowledge the abort (of
+                # course you can use whatever you'd like or even
+                # a separate event type)
+                wx.PostEvent(self._notify_window, ResultEvent(None))
+                return
+
+    def abort(self):
+        """abort worker thread."""
+        # Method for use by main thread to signal an abort
+        self._want_abort = 1
+
+# GUI --------------------------------------------------------------------------------------
 class MyFrame(wx.Frame):
     def __init__(self):
-        name = 'Logan'
         super().__init__(parent=None, title=f'Chatting with {name}')
 
         # Remember window size and position
@@ -15,9 +93,13 @@ class MyFrame(wx.Frame):
         _configFile = os.path.join(os.getcwd(), "persist-saved-cfg")  # getname()
         self._persistMgr.SetPersistenceFile(_configFile)
         if not self._persistMgr.RegisterAndRestoreAll(self):
-            print(" no worky  ")
+            print(" no work ")
 
         panel = wx.Panel(self)
+
+        # Set up event handler for any worker thread results
+        EVT_RESULT(self, self.OnResult)
+        self.worker = None  # And indicate we don't have a worker thread yet
 
         # Chat log
         self.chat_box = wx.StaticText(panel, style=wx.TE_MULTILINE | wx.BORDER_THEME | wx.VSCROLL | wx.ST_NO_AUTORESIZE)
@@ -30,7 +112,7 @@ class MyFrame(wx.Frame):
 
         # Message box
         self.text_ctrl = wx.TextCtrl(style=wx.TE_PROCESS_ENTER | wx.TE_MULTILINE, parent=panel)
-        self.text_ctrl.Bind(wx.EVT_TEXT_ENTER, self.key_code)
+        self.text_ctrl.Bind(wx.EVT_KEY_DOWN, self.key_code)  # wx.EVT_TEXT_ENTER | wx.EVT_KEY_DOWN
 
         # Add to boxes and sizer
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -41,9 +123,40 @@ class MyFrame(wx.Frame):
         sizer.Add(box_send, 0, wx.EXPAND | wx.ALL, 5)  # Add send sizer to main
 
         panel.SetSizer(sizer)
+        self.OnStart(None)  # Start chat server
         self.Show()
 
+    def OnStart(self, event):
+        # Start Computation.
+        # Trigger the worker thread unless it's already busy
+        if not self.worker:
+            # self.status.SetLabel('Starting computation')
+            self.worker = WorkerThread(self)
+
+    def OnStop(self, event):
+        # Stop Computation.
+        # Flag the worker thread to stop if running
+        if self.worker:
+            # self.status.SetLabel('Trying to abort computation')
+            self.worker.abort()
+
+    def OnResult(self, event):
+        # Show Result status.
+        if event.data:
+            self.append_chat(event.data)
+        # In either event, the worker is done
+        self.worker = None
+
     def append_chat(self, msg):
+        u_separator = '?>:'
+        if u_separator in msg:
+            u = msg.split(u_separator)[0]
+            msg = msg.replace(u + u_separator, '')
+        else:
+            u = user
+        u += ':'
+        msg_padded = msg.replace('\n', '\n' + 16 * ' ')
+        msg = f'{u:<{10}}{msg_padded}'
         chatHistory.append(msg)
         chatHistory_Display = ''
         for message in chatHistory:
@@ -51,17 +164,36 @@ class MyFrame(wx.Frame):
         self.chat_box.SetLabel(chatHistory_Display)
 
     def send_message(self, event):
-        value = self.text_ctrl.GetValue()
-        if value:
-            print(value)
-            self.append_chat(value)
+        msg = self.text_ctrl.GetValue()
+        if msg:
+            self.append_chat(msg)
             self.text_ctrl.Clear()
 
+            # Send to recipient
+            client = socket.socket()
+            ip = socket.gethostbyname('CADD-13')
+            port = 3434
+
+            try:
+                client.connect((ip, port))
+            except:
+                print("Not connected to client")
+            else:
+                print("Connect to client: ", ip)
+                to_send = msg.encode("UTF-8")
+                client.send(to_send)
+
     def key_code(self, event):
-        if wx.KeyboardState.ShiftDown:
+        unicodeKey = event.GetUnicodeKey()
+        if event.GetModifiers() == wx.MOD_SHIFT and unicodeKey == wx.WXK_RETURN:
             self.text_ctrl.WriteText('\n')
-        else:
+            # print("Shift + Enter")
+        elif unicodeKey == wx.WXK_RETURN:
             self.send_message(self)
+            # print("Just Enter")
+        else:
+            event.Skip()
+            # print("Any other character")
 
     def on_close(self, event):
         self._persistMgr.SaveAndUnregister()
