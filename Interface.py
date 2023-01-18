@@ -8,25 +8,47 @@ import wx.lib.agw.persist as PM
 # from Server import WorkerThread
 
 chatHistory = []
+connections = []
 user = "Logan"
 name = 'Tyler'
+u_separator = '?>:'
+client_keyword = 'Client-+:'
 
-# Define notification event for thread completion
-EVT_RESULT_ID = wx.ID_ANY
+# Receive message event ---------------------------------------------
+EVT_RECEIVE_MSG_ID = wx.ID_ANY  # Define notification event for thread completion
 
 
-def EVT_RESULT(win, func):
+def EVT_RECEIVE_MSG(win, func):
     # Define Result Event.
-    win.Connect(-1, -1, EVT_RESULT_ID, func)
+    win.Connect(-1, -1, EVT_RECEIVE_MSG_ID, func)
 
 
-class ResultEvent(wx.PyEvent):
+class ReceiveMessage(wx.PyEvent):
     # Simple event to carry arbitrary result data.
     def __init__(self, data):
         # Init Result Event.
         wx.PyEvent.__init__(self)
-        self.SetEventType(EVT_RESULT_ID)
+        self.SetEventType(EVT_RECEIVE_MSG_ID)
         self.data = data
+
+
+# Receive connection event ---------------------------------------------
+EVT_RECEIVE_CON_ID = wx.ID_ANY  # Define notification event for thread completion
+
+
+def EVT_RECEIVE_CON(win, func):
+    # Define Result Event.
+    win.Connect(-1, -1, EVT_RECEIVE_CON_ID, func)
+
+
+class ReceiveConnection(wx.PyEvent):
+    # Simple event to carry arbitrary result data.
+    def __init__(self, data):
+        # Init Result Event.
+        wx.PyEvent.__init__(self)
+        self.SetEventType(EVT_RECEIVE_CON_ID)
+        self.socket = data
+
 
 # SERVER ----------------------------------------------------------------------------------------
 class WorkerThread(Thread):
@@ -48,39 +70,42 @@ class WorkerThread(Thread):
         ip = socket.gethostbyname('CADD-13')
         port = 3434
         print(ip)
-        try:
-            server.bind((ip, port))
-        except:
-            print("Bind failed")
-        else:
-            print("Bind successful")
-        server.listen(5)
-        clientsocket = None
         while True:
-            if clientsocket is None:
-                print("[Waiting for connection..]")
-                (clientsocket, address) = server.accept()
-                print("Client accepted from", address)
-                msg = "pong"
-                clientsocket.send(msg.encode("UTF-8"))
+            try:
+                server.bind((ip, port))
+            except:
+                print("Bind failed")
             else:
-                print("[Waiting for response...]")
-                msg = clientsocket.recv(1024)
-                msg = msg.decode("UTF-8")
-                print(msg)
-                wx.PostEvent(self._notify_window, ResultEvent(msg))  # Here's where the result would be returned
+                print("Bind successful")
+            server.listen(5)
+            clientsocket = None
+            while True:
+                if clientsocket is None:
+                    print("[Waiting for connection..]")
+                    (clientsocket, address) = server.accept()
+                    wx.PostEvent(self._notify_window, ReceiveConnection(clientsocket))
+                    print("Client accepted from", address)
+                    msg = "pong"
+                    clientsocket.send(msg.encode("UTF-8"))
+                else:
+                    print("[Waiting for response...]")
+                    msg = clientsocket.recv(1024)
+                    msg = msg.decode("UTF-8")
+                    print(msg)
+                    wx.PostEvent(self._notify_window, ReceiveMessage(msg))  # Here's where the result would be returned
 
-            if self._want_abort:
-                # Use a result of None to acknowledge the abort (of
-                # course you can use whatever you'd like or even
-                # a separate event type)
-                wx.PostEvent(self._notify_window, ResultEvent(None))
-                return
+                if self._want_abort:
+                    # Use a result of None to acknowledge the abort (of
+                    # course you can use whatever you'd like or even
+                    # a separate event type)
+                    wx.PostEvent(self._notify_window, ReceiveMessage(None))
+                    return
 
     def abort(self):
         """abort worker thread."""
         # Method for use by main thread to signal an abort
         self._want_abort = 1
+
 
 # GUI --------------------------------------------------------------------------------------
 class MyFrame(wx.Frame):
@@ -98,7 +123,8 @@ class MyFrame(wx.Frame):
         panel = wx.Panel(self)
 
         # Set up event handler for any worker thread results
-        EVT_RESULT(self, self.OnResult)
+        EVT_RECEIVE_MSG(self, self.ReceiveMsg)
+        EVT_RECEIVE_CON(self, self.ReceiveCon)
         self.worker = None  # And indicate we don't have a worker thread yet
 
         # Chat log
@@ -140,15 +166,21 @@ class MyFrame(wx.Frame):
             # self.status.SetLabel('Trying to abort computation')
             self.worker.abort()
 
-    def OnResult(self, event):
+    def ReceiveMsg(self, event):
         # Show Result status.
         if event.data:
             self.append_chat(event.data)
         # In either event, the worker is done
-        self.worker = None
+        # self.worker = None
+
+    def ReceiveCon(self, event):
+        # Show Result status.
+        socket = event.data
+        if socket and socket not in connections:
+            connections.append(socket)
+
 
     def append_chat(self, msg):
-        u_separator = '?>:'
         if u_separator in msg:
             u = msg.split(u_separator)[0]
             msg = msg.replace(u + u_separator, '')
@@ -168,7 +200,10 @@ class MyFrame(wx.Frame):
         if msg:
             self.append_chat(msg)
             self.text_ctrl.Clear()
-
+            to_send = msg.encode("UTF-8")
+            clientsocket = connections[0]
+            clientsocket.send(to_send)
+            """
             # Send to recipient
             client = socket.socket()
             ip = socket.gethostbyname('CADD-13')
@@ -182,6 +217,7 @@ class MyFrame(wx.Frame):
                 print("Connect to client: ", ip)
                 to_send = msg.encode("UTF-8")
                 client.send(to_send)
+            """
 
     def key_code(self, event):
         unicodeKey = event.GetUnicodeKey()
