@@ -35,24 +35,6 @@ class ReceiveMessage(wx.PyEvent):
         self.data = data
 
 
-# Receive connection event ---------------------------------------------
-EVT_RECEIVE_CON_ID = wx.ID_ANY  # Define notification event for thread completion
-
-
-def EVT_RECEIVE_CON(win, func):
-    # Define Result Event.
-    win.Connect(-1, -1, EVT_RECEIVE_CON_ID, func)
-
-
-class ReceiveConnection(wx.PyEvent):
-    # Simple event to carry arbitrary result data.
-    def __init__(self, data):
-        # Init Result Event.
-        wx.PyEvent.__init__(self)
-        self.SetEventType(EVT_RECEIVE_CON_ID)
-        self.data = data
-
-
 # SERVER ----------------------------------------------------------------------------------------
 class WorkerThread(Thread):
     """Worker Thread Class."""
@@ -69,61 +51,50 @@ class WorkerThread(Thread):
 
     def run(self):
         """Run Worker Thread."""
-        server = 'CADD-13'
         host = socket.gethostname()
-        server_ip = socket.gethostbyname(server)
-        port = 3434
+        server_ip = socket.gethostbyname(host)
+        receive_port = 3434
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if host == server:
-            try:
-                server = client
-                server.bind((server_ip, port))
-                server.listen(5)
-            except:
-                print("Bind failed")
-            else:
-                print("Bind successful: " + server_ip)
-                clientsocket = None
+        server = client
+        server.bind((server_ip, receive_port))
+        server.listen(5)
+        print("Bind successful: " + server_ip)
+        while True:
+            # print("[Waiting for connection..]")
+            _thread.start_new_thread(self.handle_connection, server.accept())
+            #wx.PostEvent(self._notify_window, ReceiveConnection(str(address[0]) + '=' + username))
+            if self._msg:
                 while True:
-                    if clientsocket is None:
-                        print("[Waiting for connection..]")
-                        (clientsocket, address) = server.accept()
-                        print("Client accepted from", address[0])
-                        clientsocket.settimeout(0.1)
-                        clientsocket.sendto("Logan".encode("UTF-8"), address)
-                        clientsocket.settimeout(0.1)
-                        username, address = clientsocket.recvfrom(1024)
-                        username = username.decode("UTF-8")
-                        wx.PostEvent(self._notify_window, ReceiveConnection(str(address[0]) + '=' + username))
+                    if host == 'CADD-13':
+                        send_host = 'CADD-4'
+                        send_port = 3434
                     else:
-                        # print("[Waiting for response...]")
-                        rev_msg, address = clientsocket.recvfrom(1024)
-                        if rev_msg:
-                            msg = rev_msg.decode("UTF-8")
-                            print(rev_msg)
-                            wx.PostEvent(self._notify_window, ReceiveMessage(rev_msg))  # Post even for GUI to react
-                        if self._msg:
-                            clientsocket.sendto(self._msg.encode("UTF-8"), address)
-                            print(self._msg)
-                    """
-                    if self._msg:
-                        # Use a result of None to acknowledge the send_message (of
-                        # course you can use whatever you'd like or even
-                        # a separate event type)
-                        wx.PostEvent(self._notify_window, ReceiveMessage(None))
-                        return
-                    """
-        else:
-            client.connect((server_ip, port))
-            username, address = client.recvfrom(1024)
-            username = username.decode("UTF-8")
-            wx.PostEvent(self._notify_window, ReceiveConnection(server_ip + '=' + username))
-            client.sendto("Tyler".encode("UTF-8"), (server_ip, port))
+                        send_host = 'CADD-13'
+                        send_port = 3434
+                    try:
+                        client.connect((send_host, send_port))
+                        client.settimeout(0.1)
+                        client.send(self._msg)
+                        print(self._msg)
+                        self._msg = ""
+                        break
+                    except:
+                        client.close()
+                        client = socket.socket()
+                        client.connect_ex((send_host, send_port))
+                        time.sleep(1)
+
+    def handle_connection(self, client, address):
+        print("Client accepted from", address)
+        client.settimeout(0.1)
+        msg = client.recv(1024).decode("UTF-8")
+        wx.PostEvent(self._notify_window, ReceiveMessage(msg))
 
     def send_message(self, msg):
         # send_message worker thread.
         # Method for use by main thread to signal a send_message
-        self._msg = msg
+        self._msg = msg.encode("UTF-8")
+        # print(self._msg)
 
 
 
@@ -185,18 +156,6 @@ class MyFrame(wx.Frame):
             self.append_chat(event.data)
         # In either event, the worker is done
         # self.worker = None
-
-    global addresses
-    addresses = {}
-
-    def ReceiveCon(self, event):
-        # Show Result status.
-        data = event.data
-        data = data.split('=')
-        username = data[0]
-        address = data[1]
-        # if address not in addresses:
-        addresses[address] = username
 
     def append_chat(self, msg):
         if u_separator in msg:
