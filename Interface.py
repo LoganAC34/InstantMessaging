@@ -89,14 +89,15 @@ class WorkerThread(Thread):
                         print("[Waiting for connection..]")
                         (clientsocket, address) = server.accept()
                         print("Client accepted from", address)
+                        clientsocket.settimeout(0.1)
                         clientsocket.sendto("Logan".encode("UTF-8"), address)
                         clientsocket.settimeout(0.1)
-                        username = clientsocket.recv(1024)
+                        username, address = clientsocket.recvfrom(1024)
                         username = username.decode("UTF-8")
                         wx.PostEvent(self._notify_window, ReceiveConnection(address + '=' + username))
                     else:
                         print("[Waiting for response...]")
-                        msg = clientsocket.recv(1024)
+                        msg, address = clientsocket.recvfrom(1024)
                         msg = msg.decode("UTF-8")
                         print(msg)
                         wx.PostEvent(self._notify_window, ReceiveMessage(msg))  # Post even for GUI to react
@@ -111,9 +112,9 @@ class WorkerThread(Thread):
         else:
             client.connect((server_ip, port))
             time.sleep(0.1)  # wait for handler thread to display connection
-            username, address = client.recv(1024)
+            username, address = client.recvfrom(1024)
             username = username.decode("UTF-8")
-            wx.PostEvent(self._notify_window, ReceiveConnection(address + '=' + username))
+            wx.PostEvent(self._notify_window, ReceiveConnection(server_ip + '=' + username))
             client.sendto("Tyler".encode("UTF-8"), server_ip)
     """
     def abort(self):
