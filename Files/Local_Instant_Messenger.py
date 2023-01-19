@@ -1,16 +1,29 @@
 import _thread
 import socket
 import subprocess
+import sys
 from threading import Thread
-
 import wx
 import os
 import wx.lib.agw.persist as pm
 
-# from Server import WorkerThread
+# from Server import SocketWorkerThread
+
+# Relative and exe paths
+try:
+    # we are running in a bundle
+    exe = sys._MEIPASS + '\\'
+    relative = os.path.dirname(sys.executable) + '\\'
+except AttributeError:
+    # we are running in a normal Python environment
+    exe = os.path.dirname(os.path.abspath(__file__)) + '\\'
+    relative = '\\'.join(exe.split('\\')[:-2]) + '\\'
+
 
 chatHistory = []
-if socket.gethostname() == 'CADD-13':
+Logan_PC = 'CADD-13'
+Tyler_PC = 'CADD-7'
+if socket.gethostname() == Logan_PC:
     send_host_name = 'Logan'
     receiving_host_name = 'Tyler'
 else:
@@ -38,7 +51,7 @@ class ReceiveMessage(wx.PyEvent):
 
 
 # SERVER ----------------------------------------------------------------------------------------
-class WorkerThread(Thread):
+class SocketWorkerThread(Thread):
     """Worker Thread Class."""
     print("Server Started")
 
@@ -56,11 +69,11 @@ class WorkerThread(Thread):
         host = socket.gethostname()
         server_ip = socket.gethostbyname(host)
         receive_port = 3434
-        if host == 'CADD-13':
-            send_host = 'CADD-7'
+        if host == Logan_PC:
+            send_host = Tyler_PC
             send_port = 3434
         else:
-            send_host = 'CADD-13'
+            send_host = Logan_PC
             send_port = 3434
 
         send_host = socket.gethostbyname(send_host)
@@ -85,10 +98,6 @@ class WorkerThread(Thread):
                         subprocess.call(f'msg /SERVER:{send_host} * /TIME:60 "{batchMessage}"', shell=True)
                         self._msg = ""
                         break
-                        #time.sleep(1)
-                    #client.close()
-                    #client = socket.socket()
-                    #client.connect_ex((send_host, send_port))
             if self._want_abort:
                 break
 
@@ -128,7 +137,7 @@ class MyFrame(wx.Frame):
         # Remember window size and position
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self._persistMgr = pm.PersistenceManager.Get()
-        _configFile = os.path.join(os.getcwd(), "persist-saved-cfg")  # getname()
+        _configFile = os.path.join(exe, 'persist-saved-cfg')  # getname()
         self._persistMgr.SetPersistenceFile(_configFile)
         if not self._persistMgr.RegisterAndRestoreAll(self):
             print(" no work ")
@@ -169,7 +178,7 @@ class MyFrame(wx.Frame):
         # Trigger the worker thread unless it's already busy
         if not self.worker:
             # self.status.SetLabel('Starting computation')
-            self.worker = WorkerThread(self)
+            self.worker = SocketWorkerThread(self)
 
     def ReceiveMsg(self, event):
         # Show Result status.
