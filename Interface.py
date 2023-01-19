@@ -10,12 +10,14 @@ import wx.lib.agw.persist as PM
 # from Server import WorkerThread
 
 chatHistory = []
-connections = []
-user = "Logan"
-name = 'Tyler'
+host = socket.gethostname()
+if host == 'CADD-13':
+    send_host_name = 'Logan'
+    receiving_host_name = 'Tyler'
+else:
+    send_host_name = 'Tyler'
+    receiving_host_name = 'Logan'
 u_separator = '?>:'
-client_keyword = 'Client-+:'
-clients = ['CADD-13', 'CADD-4']
 
 # Receive message event ---------------------------------------------
 EVT_RECEIVE_MSG_ID = wx.ID_ANY  # Define notification event for thread completion
@@ -54,7 +56,14 @@ class WorkerThread(Thread):
         host = socket.gethostname()
         server_ip = socket.gethostbyname(host)
         receive_port = 3434
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if host == 'CADD-13':
+            send_host = 'CADD-7'
+            send_port = 3434
+        else:
+            send_host = 'CADD-13'
+            send_port = 3434
+
+        send_host = socket.gethostbyname(send_host)
         #server = client
         #server.bind((server_ip, receive_port))
         #server.listen(5)
@@ -62,26 +71,22 @@ class WorkerThread(Thread):
         while True:
             #wx.PostEvent(self._notify_window, ReceiveConnection(str(address[0]) + '=' + username))
             if self._msg:
-                print("Sending message")
                 while True:
-                    if host == 'CADD-13':
-                        send_host = 'CADD-4'
-                        send_port = 3434
-                    else:
-                        send_host = 'CADD-13'
-                        send_port = 3434
+                    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     try:
-                        client.connect((send_host, send_port))
+                        print("Connecting to " + send_host + " " + str(send_port))
                         client.settimeout(0.1)
-                        print(self._msg)
+                        client.connect((send_host, send_port))
                         client.send(self._msg.encode("UTF-8"))
+                        print(self._msg)
                         self._msg = ""
                         break
-                    except:
-                        client.close()
-                        client = socket.socket()
-                        client.connect_ex((send_host, send_port))
+                    except Exception as e:
+                        print(e)
                         time.sleep(1)
+                    client.close()
+                    client = socket.socket()
+                    client.connect_ex((send_host, send_port))
 
     def run_server(self, host, port):
         """Handle all incoming connections by spawning worker threads."""
@@ -110,7 +115,7 @@ class WorkerThread(Thread):
 # GUI --------------------------------------------------------------------------------------
 class MyFrame(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title=f'Chatting with {name}')
+        super().__init__(parent=None, title=f'Chatting with {receiving_host_name}')
 
         # Remember window size and position
         self.Bind(wx.EVT_CLOSE, self.on_close)
@@ -170,7 +175,7 @@ class MyFrame(wx.Frame):
             u = msg.split(u_separator)[0]
             msg = msg.replace(u + u_separator, '')
         else:
-            u = user
+            u = send_host_name
         u += ':'
         msg_padded = msg.replace('\n', '\n' + 16 * ' ')
         msg = f'{u:<{10}}{msg_padded}'
