@@ -1,5 +1,6 @@
 import _thread
 import socket
+import subprocess
 import time
 from threading import Thread
 
@@ -78,7 +79,12 @@ class WorkerThread(Thread):
                         break
                     except Exception as e:
                         print(e)
-                        time.sleep(1)
+                        batchMessage = self._msg.replace(u_separator, ': ')
+                        batchMessage = batchMessage.replace('\n', ' ')
+                        subprocess.call(f'msg /SERVER:{send_host} * /TIME:60 "{batchMessage}"', shell=True)
+                        self._msg = ""
+                        break
+                        #time.sleep(1)
                     client.close()
                     client = socket.socket()
                     client.connect_ex((send_host, send_port))
