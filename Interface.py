@@ -195,8 +195,8 @@ class MyFrame(wx.Frame):
         data = data.split('=')
         username = data[0]
         address = data[1]
-        if addresses[address] != username:
-            connections.append(socket)
+        # if address not in addresses:
+        addresses[address] = username
 
     def append_chat(self, msg):
         if u_separator in msg:
