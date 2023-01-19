@@ -187,6 +187,7 @@ class MyFrame(wx.Frame):
         # self.worker = None
 
     global addresses
+    addresses = {}
 
     def ReceiveCon(self, event):
         # Show Result status.
