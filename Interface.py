@@ -1,7 +1,6 @@
 import _thread
 import socket
 import subprocess
-import time
 from threading import Thread
 
 import wx
@@ -21,6 +20,7 @@ u_separator = '?>:'
 
 # Receive message event ---------------------------------------------
 EVT_RECEIVE_MSG_ID = wx.ID_ANY  # Define notification event for thread completion
+ID_STOP = wx.ID_ANY
 
 
 def EVT_RECEIVE_MSG(win, func):
@@ -65,6 +65,7 @@ class WorkerThread(Thread):
 
         send_host = socket.gethostbyname(send_host)
         _thread.start_new_thread(self.run_server, (server_ip, receive_port))
+        self._want_abort = None
         while True:
             if self._msg:
                 while True:
@@ -85,9 +86,16 @@ class WorkerThread(Thread):
                         self._msg = ""
                         break
                         #time.sleep(1)
-                    client.close()
-                    client = socket.socket()
-                    client.connect_ex((send_host, send_port))
+                    #client.close()
+                    #client = socket.socket()
+                    #client.connect_ex((send_host, send_port))
+            if self._want_abort:
+                break
+
+    def abort(self):
+        """abort worker thread."""
+        # Method for use by main thread to signal an abort
+        self._want_abort = 1
 
     def run_server(self, host, port):
         """Handle all incoming connections by spawning worker threads."""
@@ -207,6 +215,7 @@ class MyFrame(wx.Frame):
 
     def on_close(self, event):
         self._persistMgr.SaveAndUnregister()
+        self.worker.abort()
         event.Skip()
 
 
