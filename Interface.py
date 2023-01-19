@@ -172,8 +172,9 @@ class MyFrame(wx.Frame):
 
     def append_chat(self, msg):
         if u_separator in msg:
-            u = msg.split(u_separator)[0]
-            msg = msg.replace(u + u_separator, '')
+            contents = msg.split(u_separator)
+            u = contents[0]
+            msg = contents[1]
         else:
             u = send_host_name
         u += ':'
@@ -191,25 +192,6 @@ class MyFrame(wx.Frame):
             self.append_chat(msg)
             self.text_ctrl.Clear()
             self.worker.send_message(msg)
-            """
-            to_send = msg.encode("UTF-8")
-            # clientsocket = connections[0]
-            # clientsocket.send(to_send)
-            
-            # Send to recipient
-            client = socket.socket()
-            ip = socket.gethostbyname('CADD-13')
-            port = 3434
-
-            try:
-                client.connect((ip, port))
-            except:
-                print("Not connected to client")
-            else:
-                print("Connect to client: ", ip)
-                to_send = msg.encode("UTF-8")
-                client.sendto(to_send)
-            """
 
     def key_code(self, event):
         unicodeKey = event.GetUnicodeKey()
