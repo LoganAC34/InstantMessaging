@@ -55,15 +55,14 @@ class WorkerThread(Thread):
         server_ip = socket.gethostbyname(host)
         receive_port = 3434
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server = client
-        server.bind((server_ip, receive_port))
-        server.listen(5)
-        print("Bind successful: " + server_ip)
+        #server = client
+        #server.bind((server_ip, receive_port))
+        #server.listen(5)
+        _thread.start_new_thread(self.run_server, (server_ip, receive_port))
         while True:
-            # print("[Waiting for connection..]")
-            _thread.start_new_thread(self.handle_connection, server.accept())
             #wx.PostEvent(self._notify_window, ReceiveConnection(str(address[0]) + '=' + username))
             if self._msg:
+                print("Sending message")
                 while True:
                     if host == 'CADD-13':
                         send_host = 'CADD-4'
@@ -74,8 +73,8 @@ class WorkerThread(Thread):
                     try:
                         client.connect((send_host, send_port))
                         client.settimeout(0.1)
-                        client.send(self._msg)
                         print(self._msg)
+                        client.send(self._msg.encode("UTF-8"))
                         self._msg = ""
                         break
                     except:
@@ -83,6 +82,15 @@ class WorkerThread(Thread):
                         client = socket.socket()
                         client.connect_ex((send_host, send_port))
                         time.sleep(1)
+
+    def run_server(self, host, port):
+        """Handle all incoming connections by spawning worker threads."""
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.bind((host, port))
+        print("Bind successful: " + host)
+        server.listen(5)
+        while True:
+            _thread.start_new_thread(self.handle_connection, server.accept())
 
     def handle_connection(self, client, address):
         print("Client accepted from", address)
@@ -93,7 +101,8 @@ class WorkerThread(Thread):
     def send_message(self, msg):
         # send_message worker thread.
         # Method for use by main thread to signal a send_message
-        self._msg = msg.encode("UTF-8")
+        self._msg = msg
+        print("Event triggered")
         # print(self._msg)
 
 
@@ -115,7 +124,6 @@ class MyFrame(wx.Frame):
 
         # Set up event handler for any worker thread results
         EVT_RECEIVE_MSG(self, self.ReceiveMsg)
-        EVT_RECEIVE_CON(self, self.ReceiveCon)
         self.worker = None  # And indicate we don't have a worker thread yet
 
         # Chat log
