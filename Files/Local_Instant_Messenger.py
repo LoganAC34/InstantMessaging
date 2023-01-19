@@ -7,19 +7,6 @@ import wx
 import os
 import wx.lib.agw.persist as pm
 
-# from Server import SocketWorkerThread
-
-# Relative and exe paths
-try:
-    # we are running in a bundle
-    exe = sys._MEIPASS + '\\'
-    relative = os.path.dirname(sys.executable) + '\\'
-except AttributeError:
-    # we are running in a normal Python environment
-    exe = os.path.dirname(os.path.abspath(__file__)) + '\\'
-    relative = '\\'.join(exe.split('\\')[:-2]) + '\\'
-
-
 chatHistory = []
 Logan_PC = 'CADD-13'
 Tyler_PC = 'CADD-7'
@@ -137,7 +124,7 @@ class MyFrame(wx.Frame):
         # Remember window size and position
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self._persistMgr = pm.PersistenceManager.Get()
-        _configFile = os.path.join(exe, 'persist-saved-cfg')  # getname()
+        _configFile = os.path.join(os.getcwd(), 'persist-saved-cfg')  # getname()
         self._persistMgr.SetPersistenceFile(_configFile)
         if not self._persistMgr.RegisterAndRestoreAll(self):
             print(" no work ")
