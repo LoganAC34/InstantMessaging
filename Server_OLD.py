@@ -63,7 +63,7 @@ class WorkerThread(Thread):
                 return
 
     def abort(self):
-        """abort worker thread."""
+        """send_message worker thread."""
         # Method for use by main thread to signal an abort
         self._want_abort = 1
 
