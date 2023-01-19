@@ -74,7 +74,7 @@ class WorkerThread(Thread):
                 while True:
                     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     try:
-                        print("Connecting to " + send_host + " " + str(send_port))
+                        print("Connecting to " + send_host + ":" + str(send_port))
                         client.settimeout(0.1)
                         client.connect((send_host, send_port))
                         client.send(self._msg.encode("UTF-8"))
@@ -107,7 +107,7 @@ class WorkerThread(Thread):
         # send_message worker thread.
         # Method for use by main thread to signal a send_message
         self._msg = msg
-        print("Event triggered")
+        #print("Event triggered")
         # print(self._msg)
 
 
@@ -191,7 +191,7 @@ class MyFrame(wx.Frame):
         if msg:
             self.append_chat(msg)
             self.text_ctrl.Clear()
-            self.worker.send_message(msg)
+            self.worker.send_message(send_host_name + u_separator + msg)
 
     def key_code(self, event):
         unicodeKey = event.GetUnicodeKey()
