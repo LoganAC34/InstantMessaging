@@ -88,19 +88,20 @@ class WorkerThread(Thread):
                     if clientsocket is None:
                         print("[Waiting for connection..]")
                         (clientsocket, address) = server.accept()
-                        print("Client accepted from", address)
+                        print("Client accepted from", address[0])
                         clientsocket.settimeout(0.1)
                         clientsocket.sendto("Logan".encode("UTF-8"), address)
                         clientsocket.settimeout(0.1)
                         username, address = clientsocket.recvfrom(1024)
                         username = username.decode("UTF-8")
-                        wx.PostEvent(self._notify_window, ReceiveConnection(address + '=' + username))
+                        wx.PostEvent(self._notify_window, ReceiveConnection(str(address[0]) + '=' + username))
                     else:
-                        print("[Waiting for response...]")
+                        # print("[Waiting for response...]")
                         msg, address = clientsocket.recvfrom(1024)
-                        msg = msg.decode("UTF-8")
-                        print(msg)
-                        wx.PostEvent(self._notify_window, ReceiveMessage(msg))  # Post even for GUI to react
+                        if msg:
+                            msg = msg.decode("UTF-8")
+                            print(msg)
+                            wx.PostEvent(self._notify_window, ReceiveMessage(msg))  # Post even for GUI to react
                     """
                     if self._want_abort:
                         # Use a result of None to acknowledge the abort (of
@@ -111,11 +112,10 @@ class WorkerThread(Thread):
                     """
         else:
             client.connect((server_ip, port))
-            time.sleep(0.1)  # wait for handler thread to display connection
             username, address = client.recvfrom(1024)
             username = username.decode("UTF-8")
             wx.PostEvent(self._notify_window, ReceiveConnection(server_ip + '=' + username))
-            client.sendto("Tyler".encode("UTF-8"), server_ip)
+            client.sendto("Tyler".encode("UTF-8"), (server_ip, port))
     """
     def abort(self):
         # abort worker thread.
