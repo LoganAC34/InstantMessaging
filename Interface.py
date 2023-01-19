@@ -1,5 +1,6 @@
 import _thread
 import socket
+import time
 from threading import Thread
 
 import wx
@@ -70,24 +71,25 @@ class WorkerThread(Thread):
         """Run Worker Thread."""
         server = 'CADD-13'
         host = socket.gethostname()
-        ip = socket.gethostbyname(server)
+        server_ip = socket.gethostbyname(server)
         port = 3434
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if host == server:
             try:
-                server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                server.bind((ip, port))
+                server = client
+                server.bind((server_ip, port))
                 server.listen(5)
             except:
                 print("Bind failed")
             else:
-                print("Bind successful: " + ip)
+                print("Bind successful: " + server_ip)
                 clientsocket = None
                 while True:
                     if clientsocket is None:
                         print("[Waiting for connection..]")
                         (clientsocket, address) = server.accept()
                         print("Client accepted from", address)
-                        clientsocket.sendto("pong".encode("UTF-8"), address)
+                        clientsocket.sendto("Logan".encode("UTF-8"), address)
                         clientsocket.settimeout(0.1)
                         username = clientsocket.recv(1024)
                         username = username.decode("UTF-8")
@@ -106,6 +108,13 @@ class WorkerThread(Thread):
                         wx.PostEvent(self._notify_window, ReceiveMessage(None))
                         return
                     """
+        else:
+            client.connect((server_ip, port))
+            time.sleep(0.1)  # wait for handler thread to display connection
+            username, address = client.recv(1024)
+            username = username.decode("UTF-8")
+            wx.PostEvent(self._notify_window, ReceiveConnection(address + '=' + username))
+            client.sendto("Tyler".encode("UTF-8"), server_ip)
     """
     def abort(self):
         # abort worker thread.
