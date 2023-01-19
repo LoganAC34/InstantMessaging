@@ -5,13 +5,12 @@ from threading import Thread
 
 import wx
 import os
-import wx.lib.agw.persist as PM
+import wx.lib.agw.persist as pm
 
 # from Server import WorkerThread
 
 chatHistory = []
-host = socket.gethostname()
-if host == 'CADD-13':
+if socket.gethostname() == 'CADD-13':
     send_host_name = 'Logan'
     receiving_host_name = 'Tyler'
 else:
@@ -64,12 +63,8 @@ class WorkerThread(Thread):
             send_port = 3434
 
         send_host = socket.gethostbyname(send_host)
-        #server = client
-        #server.bind((server_ip, receive_port))
-        #server.listen(5)
         _thread.start_new_thread(self.run_server, (server_ip, receive_port))
         while True:
-            #wx.PostEvent(self._notify_window, ReceiveConnection(str(address[0]) + '=' + username))
             if self._msg:
                 while True:
                     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -107,9 +102,8 @@ class WorkerThread(Thread):
         # send_message worker thread.
         # Method for use by main thread to signal a send_message
         self._msg = msg
-        #print("Event triggered")
+        # print("Event triggered")
         # print(self._msg)
-
 
 
 # GUI --------------------------------------------------------------------------------------
@@ -119,7 +113,7 @@ class MyFrame(wx.Frame):
 
         # Remember window size and position
         self.Bind(wx.EVT_CLOSE, self.on_close)
-        self._persistMgr = PM.PersistenceManager.Get()
+        self._persistMgr = pm.PersistenceManager.Get()
         _configFile = os.path.join(os.getcwd(), "persist-saved-cfg")  # getname()
         self._persistMgr.SetPersistenceFile(_configFile)
         if not self._persistMgr.RegisterAndRestoreAll(self):
@@ -153,10 +147,10 @@ class MyFrame(wx.Frame):
         sizer.Add(box_send, 0, wx.EXPAND | wx.ALL, 5)  # Add send sizer to main
 
         panel.SetSizer(sizer)
-        self.OnStart(None)  # Start chat server
+        self.OnStart()  # Start chat server
         self.Show()
 
-    def OnStart(self, event):
+    def OnStart(self):
         # Start Computation.
         # Trigger the worker thread unless it's already busy
         if not self.worker:
@@ -186,7 +180,7 @@ class MyFrame(wx.Frame):
             chatHistory_Display += message + '\n'
         self.chat_box.SetLabel(chatHistory_Display)
 
-    def send_message(self, event):
+    def send_message(self):
         msg = self.text_ctrl.GetValue()
         if msg:
             self.append_chat(msg)
@@ -199,7 +193,7 @@ class MyFrame(wx.Frame):
             self.text_ctrl.WriteText('\n')
             # print("Shift + Enter")
         elif unicodeKey == wx.WXK_RETURN:
-            self.send_message(self)
+            self.send_message()
             # print("Just Enter")
         else:
             event.Skip()
