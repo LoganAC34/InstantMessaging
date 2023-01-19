@@ -104,7 +104,7 @@ class WorkerThread(Thread):
                             wx.PostEvent(self._notify_window, ReceiveMessage(rev_msg))  # Post even for GUI to react
                         if self._msg:
                             clientsocket.sendto(self._msg.encode("UTF-8"), address)
-                            print(msg)
+                            print(self._msg)
                     """
                     if self._msg:
                         # Use a result of None to acknowledge the send_message (of
