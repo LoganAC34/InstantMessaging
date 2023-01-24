@@ -177,6 +177,7 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
         # self.sizer_log = wx.StaticBoxSizer(wx.VERTICAL, self)
         self.SetupScrolling(self, scrollToTop=False)
         # self.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
+
         # Font Height
         font = wx.Font()
         self.dc = wx.ScreenDC()
@@ -187,6 +188,7 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.chat_box = wx.StaticText(self, style=wx.TE_MULTILINE | wx.ST_NO_AUTORESIZE)
         self.chat_box.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
         self.chat_box.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
+        self.chat_box.SetFont(font)
         # self.sizer_log.Add(self.chat_box, 1, wx.ALL | wx.EXPAND, 0)
 
         # Sizer
@@ -215,7 +217,7 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.chat_box.SetMinSize(size)
         self.Layout()
         self.SetupScrolling(scrollToTop=False)
-        self.Scroll(size.Width, size.Height)
+        self.Scroll(0, size.Height)
 
 
 class SendPanel(wx.Panel):
