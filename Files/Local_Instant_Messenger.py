@@ -1,11 +1,12 @@
 import _thread
 import socket
 import subprocess
-import sys
+# import sys
 from threading import Thread
 import wx
 import os
-import wx.lib.agw.persist as pm
+import wx.lib.agw.persist
+import wx.lib.scrolledpanel
 
 chatHistory = []
 Logan_PC = 'CADD-13'
@@ -18,9 +19,12 @@ else:
     receiving_host_name = 'Logan'
 u_separator = '?>:'
 
-# Receive message event ---------------------------------------------
+global worker
+
+"""
+# Event handlers (first three go in main script)
 EVT_RECEIVE_MSG_ID = wx.ID_ANY  # Define notification event for thread completion
-ID_STOP = wx.ID_ANY
+worker = None  # And indicate we don't have a worker thread yet
 
 
 def EVT_RECEIVE_MSG(win, func):
@@ -34,6 +38,53 @@ class ReceiveMessage(wx.PyEvent):
         # Init Result Event.
         wx.PyEvent.__init__(self)
         self.SetEventType(EVT_RECEIVE_MSG_ID)
+        self.data = data
+
+
+EVT_RECEIVE_MSG(self, self.ReceiveMsg) # Set up event handler for any worker thread results (Goes in __init__ function)
+
+# (Goes in GUI to define outside function
+def OnStart(self):
+    # Start Computation.
+    # Trigger the worker thread unless it's already busy
+    if not worker:
+        # self.status.SetLabel('Starting computation')
+        worker = SocketWorkerThread(self)
+
+wx.PostEvent(self._notify_window, ReceiveMessage(msg)) # Goes in GUI function to trigger outside function
+
+self._notify_window = notify_window # Goes in outside function to carry data
+"""
+
+# Receive message event ---------------------------------------------
+EVT_RECEIVE_MSG_ID = wx.ID_ANY  # Define notification event for thread completion
+ID_TRIGGER_FUNC = wx.ID_ANY
+
+
+def EVT_RECEIVE_MSG(win, func):
+    # Define Result Event.
+    win.Connect(-1, -1, EVT_RECEIVE_MSG_ID, func)
+
+
+class ReceiveMessage(wx.PyEvent):
+    # Simple event to carry arbitrary result data.
+    def __init__(self, data):
+        # Init Result Event.
+        wx.PyEvent.__init__(self)
+        self.SetEventType(EVT_RECEIVE_MSG_ID)
+        self.data = data
+
+
+def EVT_TRIGGER_FUNC(win, func):
+    # Define Result Event.
+    win.Connect(-1, -1, ID_TRIGGER_FUNC, func)
+
+
+class TriggerFunction(wx.PyEvent):
+    def __init__(self, data):
+        # Init Result Event.
+        wx.PyEvent.__init__(self)
+        self.SetEventType(ID_TRIGGER_FUNC)
         self.data = data
 
 
@@ -66,6 +117,7 @@ class SocketWorkerThread(Thread):
         send_host = socket.gethostbyname(send_host)
         _thread.start_new_thread(self.run_server, (server_ip, receive_port))
         self._want_abort = None
+
         while True:
             if self._msg:
                 while True:
@@ -117,62 +169,31 @@ class SocketWorkerThread(Thread):
 
 
 # GUI --------------------------------------------------------------------------------------
-class MyFrame(wx.Frame):
-    def __init__(self):
-        super().__init__(parent=None, title=f'Chatting with {receiving_host_name}')
+class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
+    def __init__(self, parent):
+        wx.ScrolledWindow.__init__(self, parent)
 
-        # Remember window size and position
-        self.Bind(wx.EVT_CLOSE, self.on_close)
-        self._persistMgr = pm.PersistenceManager.Get()
-        _configFile = os.path.join(os.getcwd(), 'persist-saved-cfg')  # getname()
-        self._persistMgr.SetPersistenceFile(_configFile)
-        if not self._persistMgr.RegisterAndRestoreAll(self):
-            print(" no work ")
-
-        panel = wx.Panel(self)
-
-        # Set up event handler for any worker thread results
-        EVT_RECEIVE_MSG(self, self.ReceiveMsg)
-        self.worker = None  # And indicate we don't have a worker thread yet
+        # box = wx.StaticBox(self, label="", size=wx.Size(1000, 1000))
+        # self.sizer_log = wx.StaticBoxSizer(wx.VERTICAL, self)
+        self.SetupScrolling(self, scrollToTop=False)
+        # self.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
+        # Font Height
+        font = wx.Font()
+        self.dc = wx.ScreenDC()
+        self.dc.SetFont(font)
+        self.single_height = self.dc.GetMultiLineTextExtent('')
 
         # Chat log
-        self.chat_box = wx.StaticText(panel, style=wx.TE_MULTILINE | wx.BORDER_THEME | wx.VSCROLL | wx.ST_NO_AUTORESIZE)
+        self.chat_box = wx.StaticText(self, style=wx.TE_MULTILINE | wx.ST_NO_AUTORESIZE)
         self.chat_box.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
         self.chat_box.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
+        # self.sizer_log.Add(self.chat_box, 1, wx.ALL | wx.EXPAND, 0)
 
-        # Send button
-        self.my_btn = wx.Button(panel, label='Send')
-        self.my_btn.Bind(wx.EVT_BUTTON, self.send_message)  # Even bind
-
-        # Message box
-        self.text_ctrl = wx.TextCtrl(style=wx.TE_PROCESS_ENTER | wx.TE_MULTILINE, parent=panel)
-        self.text_ctrl.Bind(wx.EVT_KEY_DOWN, self.key_code)  # wx.EVT_TEXT_ENTER | wx.EVT_KEY_DOWN
-
-        # Add to boxes and sizer
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        box_send = wx.BoxSizer(wx.HORIZONTAL)
-        box_send.Add(self.my_btn, 0, wx.ALL, 5)
-        box_send.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 5)
-        sizer.Add(self.chat_box, 1, wx.EXPAND | wx.ALL, 5)
-        sizer.Add(box_send, 0, wx.EXPAND | wx.ALL, 5)  # Add send sizer to main
-
-        panel.SetSizer(sizer)
-        self.OnStart()  # Start chat server
-        self.Show()
-
-    def OnStart(self):
-        # Start Computation.
-        # Trigger the worker thread unless it's already busy
-        if not self.worker:
-            # self.status.SetLabel('Starting computation')
-            self.worker = SocketWorkerThread(self)
-
-    def ReceiveMsg(self, event):
-        # Show Result status.
-        if event.data:
-            self.append_chat(event.data)
-        # In either event, the worker is done
-        # self.worker = None
+        # Sizer
+        self.main_sizer = wx.BoxSizer()
+        # self.main_sizer.Add(self.sizer_log, 1, wx.EXPAND)
+        self.main_sizer.Add(self.chat_box, 1, wx.EXPAND)
+        self.SetSizer(self.main_sizer)
 
     def append_chat(self, msg):
         if u_separator in msg:
@@ -189,13 +210,43 @@ class MyFrame(wx.Frame):
         for message in chatHistory:
             chatHistory_Display += message + '\n'
         self.chat_box.SetLabel(chatHistory_Display)
+        size = self.dc.GetMultiLineTextExtent(chatHistory_Display)
+        size.Height = size.Height - self.single_height.Height * 2
+        self.chat_box.SetMinSize(size)
+        self.Layout()
+        self.SetupScrolling(scrollToTop=False)
+        self.Scroll(size.Width, size.Height)
 
-    def send_message(self):
+
+class SendPanel(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+
+        grand_parent = parent.GetParent()
+
+        # Send button
+        self.my_btn = wx.Button(self, label='Send')
+        self.my_btn.Bind(wx.EVT_BUTTON, self.send_message)  # Even bind
+
+        # Message box
+        self.text_ctrl = wx.TextCtrl(style=wx.TE_PROCESS_ENTER | wx.TE_MULTILINE, parent=self)
+        self.text_ctrl.Bind(wx.EVT_KEY_DOWN, self.key_code)
+
+        # sizer
+        box_send = wx.BoxSizer()
+        box_send.Add(self.my_btn, 0, wx.ALL, 5)
+        box_send.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 5)
+        self.SetSizer(box_send)
+
+        EVT_RECEIVE_MSG(self, self.ReceiveMsg)  # Set event for receive message
+        self.function = grand_parent.sub_panel_Log
+
+    def send_message(self, event):
         msg = self.text_ctrl.GetValue()
         if msg:
-            self.append_chat(msg)
+            self.function.append_chat(msg)
             self.text_ctrl.Clear()
-            self.worker.send_message(send_host_name + u_separator + msg)
+            worker.send_message(send_host_name + u_separator + msg)
 
     def key_code(self, event):
         unicodeKey = event.GetUnicodeKey()
@@ -203,19 +254,69 @@ class MyFrame(wx.Frame):
             self.text_ctrl.WriteText('\n')
             # print("Shift + Enter")
         elif unicodeKey == wx.WXK_RETURN:
-            self.send_message()
+            self.send_message(event)
             # print("Just Enter")
         else:
             event.Skip()
             # print("Any other character")
 
+    def ReceiveMsg(self, event):
+        # Show Result status.
+        if event.data:
+            self.function.append_chat(event.data)
+        # In either event, the worker is done
+        # worker = None
+
+
+class MyFrame(wx.Frame):
+    def __init__(self):
+        super().__init__(parent=None, title=f'Chatting with {receiving_host_name}', name='Local Instant Messenger')
+
+        # Remember window size and position
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+        self._persistMgr = wx.lib.agw.persist.PersistenceManager.Get()
+        _configFile = os.path.join(os.getcwd(), 'persist-saved-cfg')  # getname()
+        self._persistMgr.SetPersistenceFile(_configFile)
+        if not self._persistMgr.RegisterAndRestoreAll(self):
+            print(" no work ")
+
+        # Panels
+        main_panel = wx.Panel(self)
+        self.sub_panel_Log = LogPanel(main_panel)
+        self.sub_panel_Send = SendPanel(main_panel)
+
+        # Set up event handler for any worker thread results
+        global worker
+        worker = None  # And indicate we don't have a worker thread yet
+
+        # Sizer
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(self.sub_panel_Log, 1, wx.EXPAND, 5)
+        main_sizer.Add(self.sub_panel_Send, 0, wx.EXPAND | wx.ALL, 5)
+        main_panel.SetSizer(main_sizer)
+        self.OnStart()  # Start chat server
+        self.SetMinSize(wx.Size(300, 300))
+
+    def OnStart(self):
+        # Start Computation.
+        # Trigger the worker thread unless it's already busy
+        global worker
+        if not worker:
+            # self.status.SetLabel('Starting computation')
+            worker = SocketWorkerThread(self)
+
+    def OnUpdate(self):
+        self.Update()
+        self.Refresh()
+
     def on_close(self, event):
         self._persistMgr.SaveAndUnregister()
-        self.worker.abort()
+        worker.abort()
         event.Skip()
 
 
 if __name__ == '__main__':
     app = wx.App()
     frame = MyFrame()
+    frame.Show()
     app.MainLoop()
