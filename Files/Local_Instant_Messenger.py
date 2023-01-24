@@ -10,7 +10,7 @@ import wx.lib.scrolledpanel
 
 chatHistory = []
 Logan_PC = 'CADD-13'
-Tyler_PC = 'CADD-7'
+Tyler_PC = 'CADD-4'
 if socket.gethostname() == Logan_PC:
     send_host_name = 'Logan'
     receiving_host_name = 'Tyler'
