@@ -1,9 +1,12 @@
 import _thread
+import hashlib
 import os
 import socket
 import subprocess
 import sys
+import tempfile
 import urllib.request
+from shutil import copyfile
 from threading import Thread
 
 import wx
@@ -145,7 +148,6 @@ class SocketWorkerThread(Thread):
         """abort worker thread."""
         # Method for use by main thread to signal an abort
         self._want_abort = 1
-        self.download_update()
 
     def run_server(self, host, port):
         """Handle all incoming connections by spawning worker threads."""
@@ -168,15 +170,6 @@ class SocketWorkerThread(Thread):
         self._msg = msg
         # print("Event triggered")
         # print(self._msg)
-
-    def download_update(self):
-        try:
-            url = "https://github.com/LoganAC34/InstantMessaging/raw/master/Local_Instant_Messenger.exe"
-            filename = os.path.join(os.getcwd(), "Local_Instant_Messenger.exe")
-            urllib.request.urlretrieve(url, filename=filename)
-            subprocess.call('ie4uinit.exe -show', shell=True)
-        except:
-            pass
 
 
 # GUI --------------------------------------------------------------------------------------
@@ -318,6 +311,7 @@ class MyFrame(wx.Frame):
         if not worker:
             # self.status.SetLabel('Starting computation')
             worker = SocketWorkerThread(self)
+        self.download_update()
 
     def ReceiveMsg(self, event):
         self.sub_panel_Log.append_chat(event.data)
@@ -326,6 +320,27 @@ class MyFrame(wx.Frame):
         self._persistMgr.SaveAndUnregister()
         worker.abort()
         event.Skip()
+
+    def download_update(self):
+        try:
+            url = "https://github.com/LoganAC34/InstantMessaging/raw/master/Local_Instant_Messenger.exe"
+            file_github = os.path.join(tempfile.gettempdir(), os.path.basename(url))
+            urllib.request.urlretrieve(url, filename=file_github)
+        except:
+            pass
+        else:
+            file_local = exe
+            sha_github = hashlib.sha256(file_github.encode()).hexdigest()
+            sha_local = hashlib.sha256(file_local.encode()).hexdigest()
+            if sha_github != sha_local:
+                copyfile(file_github, file_local)
+                subprocess.call('ie4uinit.exe -show', shell=True)
+                popup = wx.adv.NotificationMessage(title='Update Available',
+                                                   message="There is an update available. Close and restart program "
+                                                           "to use updated program.")
+                popup.SetIcon(wx.Icon(icon))
+                popup.Show()
+
 
 
 if __name__ == '__main__':
