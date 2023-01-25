@@ -33,13 +33,6 @@ else:
 u_separator = '?>:'
 icon = exe + 'vector-chat-icon-png_302635.png'
 
-try:
-    url = "https://github.com/LoganAC34/InstantMessaging/raw/master/Local_Instant_Messenger.exe"
-    filename = os.path.join(os.getcwd(), "Local_Instant_Messenger.exe")
-    filename, headers = urllib.request.urlretrieve(url, filename=filename)
-except:
-    pass
-
 global worker
 
 """
@@ -152,6 +145,7 @@ class SocketWorkerThread(Thread):
         """abort worker thread."""
         # Method for use by main thread to signal an abort
         self._want_abort = 1
+        self.download_update()
 
     def run_server(self, host, port):
         """Handle all incoming connections by spawning worker threads."""
@@ -174,6 +168,15 @@ class SocketWorkerThread(Thread):
         self._msg = msg
         # print("Event triggered")
         # print(self._msg)
+
+    def download_update(self):
+        try:
+            url = "https://github.com/LoganAC34/InstantMessaging/raw/master/Local_Instant_Messenger.exe"
+            filename = os.path.join(os.getcwd(), "Local_Instant_Messenger.exe")
+            urllib.request.urlretrieve(url, filename=filename)
+            subprocess.call('ie4uinit.exe -show', shell=True)
+        except:
+            pass
 
 
 # GUI --------------------------------------------------------------------------------------
