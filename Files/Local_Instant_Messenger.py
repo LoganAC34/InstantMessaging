@@ -1,12 +1,25 @@
 import _thread
+import os
 import socket
 import subprocess
-# import sys
+import sys
+import urllib.request
 from threading import Thread
+
 import wx
-import os
+import wx.adv
 import wx.lib.agw.persist
 import wx.lib.scrolledpanel
+
+# Relative and exe paths
+try:
+    # we are running in a bundle
+    exe = sys._MEIPASS + '\\'
+    relative = os.path.dirname(sys.executable) + '\\'
+except AttributeError:
+    # we are running in a normal Python environment
+    exe = os.path.dirname(os.path.abspath(__file__)) + '\\'
+    relative = '\\'.join(exe.split('\\')[:-2]) + '\\'
 
 chatHistory = []
 Logan_PC = 'CADD-13'
@@ -18,6 +31,14 @@ else:
     send_host_name = 'Tyler'
     receiving_host_name = 'Logan'
 u_separator = '?>:'
+icon = exe + 'vector-chat-icon-png_302635.png'
+
+try:
+    url = "https://github.com/LoganAC34/InstantMessaging/raw/master/Local_Instant_Messenger.exe"
+    filename = os.path.join(os.getcwd(), "Local_Instant_Messenger.exe")
+    filename, headers = urllib.request.urlretrieve(url, filename=filename)
+except:
+    pass
 
 global worker
 
@@ -72,19 +93,6 @@ class ReceiveMessage(wx.PyEvent):
         # Init Result Event.
         wx.PyEvent.__init__(self)
         self.SetEventType(EVT_RECEIVE_MSG_ID)
-        self.data = data
-
-
-def EVT_TRIGGER_FUNC(win, func):
-    # Define Result Event.
-    win.Connect(-1, -1, ID_TRIGGER_FUNC, func)
-
-
-class TriggerFunction(wx.PyEvent):
-    def __init__(self, data):
-        # Init Result Event.
-        wx.PyEvent.__init__(self)
-        self.SetEventType(ID_TRIGGER_FUNC)
         self.data = data
 
 
@@ -202,6 +210,10 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
             contents = msg.split(u_separator)
             u = contents[0]
             msg = contents[1]
+            if not app.IsActive():
+                popup = wx.adv.NotificationMessage(title=u, message=msg)
+                popup.SetIcon(wx.Icon(icon))
+                popup.Show()
         else:
             u = send_host_name
         u += ':'
@@ -224,7 +236,9 @@ class SendPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
+        # Get parent
         grand_parent = parent.GetParent()
+        self.function = grand_parent.sub_panel_Log
 
         # Send button
         self.my_btn = wx.Button(self, label='Send')
@@ -239,9 +253,6 @@ class SendPanel(wx.Panel):
         box_send.Add(self.my_btn, 0, wx.ALL, 5)
         box_send.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(box_send)
-
-        EVT_RECEIVE_MSG(self, self.ReceiveMsg)  # Set event for receive message
-        self.function = grand_parent.sub_panel_Log
 
     def send_message(self, event):
         msg = self.text_ctrl.GetValue()
@@ -262,30 +273,25 @@ class SendPanel(wx.Panel):
             event.Skip()
             # print("Any other character")
 
-    def ReceiveMsg(self, event):
-        # Show Result status.
-        if event.data:
-            self.function.append_chat(event.data)
-        # In either event, the worker is done
-        # worker = None
-
 
 class MyFrame(wx.Frame):
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__(parent=None, title=f'Chatting with {receiving_host_name}', name='Local Instant Messenger')
 
         # Remember window size and position
-        self.Bind(wx.EVT_CLOSE, self.on_close)
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
         self._persistMgr = wx.lib.agw.persist.PersistenceManager.Get()
         _configFile = os.path.join(os.getcwd(), 'persist-saved-cfg')  # getname()
         self._persistMgr.SetPersistenceFile(_configFile)
         if not self._persistMgr.RegisterAndRestoreAll(self):
-            print(" no work ")
+            print("No config file")
 
         # Panels
         main_panel = wx.Panel(self)
         self.sub_panel_Log = LogPanel(main_panel)
         self.sub_panel_Send = SendPanel(main_panel)
+
+        self.SetIcon(wx.Icon(icon))  # App icon
 
         # Set up event handler for any worker thread results
         global worker
@@ -299,6 +305,9 @@ class MyFrame(wx.Frame):
         self.OnStart()  # Start chat server
         self.SetMinSize(wx.Size(300, 300))
 
+        # Bind
+        EVT_RECEIVE_MSG(self, self.ReceiveMsg)  # Set event for receive message
+
     def OnStart(self):
         # Start Computation.
         # Trigger the worker thread unless it's already busy
@@ -307,11 +316,10 @@ class MyFrame(wx.Frame):
             # self.status.SetLabel('Starting computation')
             worker = SocketWorkerThread(self)
 
-    def OnUpdate(self):
-        self.Update()
-        self.Refresh()
+    def ReceiveMsg(self, event):
+        self.sub_panel_Log.append_chat(event.data)
 
-    def on_close(self, event):
+    def OnClose(self, event):
         self._persistMgr.SaveAndUnregister()
         worker.abort()
         event.Skip()
@@ -319,6 +327,8 @@ class MyFrame(wx.Frame):
 
 if __name__ == '__main__':
     app = wx.App()
-    frame = MyFrame()
+    app.SetAppName('Local Chat')
+    app.SetVendorName('Logan')
+    frame = MyFrame(None)
     frame.Show()
     app.MainLoop()

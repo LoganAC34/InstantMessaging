@@ -18,9 +18,10 @@ PyInstaller.__main__.run([
     '--distpath', dir_path,
     '-F',
     '--noconsole',
+    '--icon', dst + 'vector-chat-icon-png_302635.png',
     #'--hidden-import', 'PYTHONCOM',
     #'--debug=imports',
-    #'--add-data', dst + 'db_template.db;.',
+    '--add-data', dst + 'vector-chat-icon-png_302635.png;.',
 ])
 
 shutil.rmtree(dst)
