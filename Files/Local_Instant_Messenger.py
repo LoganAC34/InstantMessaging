@@ -342,7 +342,7 @@ class MyFrame(wx.Frame):
                 with open(pickle_file, 'rb') as f:
                     sha_local = pickle.load(f)
             else:
-                sha_local = None
+                sha_local = "None"
                 print("No local sha value")
 
             print("Github sha: " + sha_github)
