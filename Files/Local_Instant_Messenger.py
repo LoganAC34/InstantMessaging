@@ -1,5 +1,4 @@
 import _thread
-import hashlib
 import os
 import pathlib
 import pickle
@@ -7,10 +6,11 @@ import socket
 import subprocess
 import sys
 from os.path import exists
-from urllib.request import urlopen
 from shutil import copyfileobj
 from threading import Thread
+from urllib.request import urlopen
 
+import requests
 import wx
 import wx.adv
 import wx.lib.agw.persist
@@ -334,8 +334,9 @@ class MyFrame(wx.Frame):
     def DownloadUpdate():
         try:
             # Get GitHub sha value:
-            url = 'https://github.com/LoganAC34/InstantMessaging/raw/master/Local_Instant_Messenger.exe'
-            sha_github = hashlib.sha256(url.encode()).hexdigest()
+            url_sha = 'https://api.github.com/repos/LoganAC34/InstantMessaging/contents/Local_Instant_Messenger.exe'
+            sha_github = requests.get(url_sha).json()
+            sha_github = sha_github['sha']
 
             # Get local file sha value:
             pickle_file = my_data_dir / 'sha.pkl'
@@ -356,8 +357,9 @@ class MyFrame(wx.Frame):
 
                 # Download GitHub file
                 print("Downloading updated file...")
-                file_local = os.path.basename(url)
-                with urlopen(url) as in_stream, open(file_local, 'wb') as out_file:
+                url_download = "https://github.com/LoganAC34/InstantMessaging/blob/master/Local_Instant_Messenger.exe"
+                file_local = os.path.basename(url_download)
+                with urlopen(url_download) as in_stream, open(file_local, 'wb') as out_file:
                     copyfileobj(in_stream, out_file)
                 subprocess.call('ie4uinit.exe -show', shell=True)
 

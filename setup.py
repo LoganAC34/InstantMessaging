@@ -17,12 +17,11 @@ PyInstaller.__main__.run([
     dst + 'Local_Instant_Messenger.py',
     '--distpath', dir_path,
     '-F',
-    #'--noconsole',
+    # '--noconsole',
     '--icon', r'.\Files\vector-chat-icon-png_302635.png',
-    #'--hidden-import', 'PYTHONCOM',
-    #'--debug=imports',
+    # '--hidden-import', 'PYTHONCOM',
+    # '--debug=imports',
     '--add-data', r'.\Files\vector-chat-icon-png_302635.png;.',
 ])
 
 shutil.rmtree(dst)
-
