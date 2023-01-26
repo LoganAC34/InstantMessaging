@@ -1,12 +1,14 @@
 import _thread
 import hashlib
 import os
+import pathlib
+import pickle
 import socket
 import subprocess
 import sys
-import tempfile
-import urllib.request
-from shutil import copyfile
+from os.path import exists
+from urllib.request import urlopen
+from shutil import copyfileobj
 from threading import Thread
 
 import wx
@@ -35,6 +37,12 @@ else:
     receiving_host_name = 'Logan'
 u_separator = '?>:'
 icon = exe + 'vector-chat-icon-png_302635.png'
+
+my_datadir = pathlib.Path.home() / 'AppData/Roaming' / "Local_Instant_Messenger"
+try:
+    my_datadir.mkdir(parents=True)
+except FileExistsError:
+    pass
 
 global worker
 
@@ -277,7 +285,7 @@ class MyFrame(wx.Frame):
         # Remember window size and position
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self._persistMgr = wx.lib.agw.persist.PersistenceManager.Get()
-        _configFile = os.path.join(os.getcwd(), 'persist-saved-cfg')  # getname()
+        _configFile = my_datadir / 'persist-saved-cfg'
         self._persistMgr.SetPersistenceFile(_configFile)
         if not self._persistMgr.RegisterAndRestoreAll(self):
             print("No config file")
@@ -311,7 +319,8 @@ class MyFrame(wx.Frame):
         if not worker:
             # self.status.SetLabel('Starting computation')
             worker = SocketWorkerThread(self)
-        self.download_update()
+        t = Thread(target=self.DownloadUpdate)
+        t.start()
 
     def ReceiveMsg(self, event):
         self.sub_panel_Log.append_chat(event.data)
@@ -321,26 +330,49 @@ class MyFrame(wx.Frame):
         worker.abort()
         event.Skip()
 
-    def download_update(self):
+    def DownloadUpdate(self):
         try:
-            url = "https://github.com/LoganAC34/InstantMessaging/raw/master/Local_Instant_Messenger.exe"
-            file_github = os.path.join(tempfile.gettempdir(), os.path.basename(url))
-            urllib.request.urlretrieve(url, filename=file_github)
-        except:
-            pass
-        else:
-            file_local = exe
-            sha_github = hashlib.sha256(file_github.encode()).hexdigest()
-            sha_local = hashlib.sha256(file_local.encode()).hexdigest()
-            if sha_github != sha_local:
-                copyfile(file_github, file_local)
-                subprocess.call('ie4uinit.exe -show', shell=True)
-                popup = wx.adv.NotificationMessage(title='Update Available',
-                                                   message="There is an update available. Close and restart program "
-                                                           "to use updated program.")
-                popup.SetIcon(wx.Icon(icon))
-                popup.Show()
+            # Get GitHub sha value:
+            url = 'https://github.com/LoganAC34/InstantMessaging/raw/master/Local_Instant_Messenger.exe'
+            sha_github = hashlib.sha256(url.encode()).hexdigest()
 
+            # Get local file sha value:
+            pickle_file = my_datadir / 'sha.pkl'
+            if exists(pickle_file):
+                with open(pickle_file, 'rb') as f:
+                    sha_local = pickle.load(f)
+            else:
+                sha_local = None
+                print("No local sha value")
+
+            print("Github sha: " + sha_github)
+            print("Local sha: " + sha_local)
+
+            if sha_github != sha_local:
+                # Save current sha value:
+                with open(pickle_file, 'wb') as f:
+                    pickle.dump(sha_github, f)
+
+                # Download GitHub file
+                print("Downloading updated file...")
+                file_local = os.path.basename(url)
+                with urlopen(url) as in_stream, open(file_local, 'wb') as out_file:
+                    copyfileobj(in_stream, out_file)
+                subprocess.call('ie4uinit.exe -show', shell=True)
+
+                # Notification about update
+                update_popup = wx.adv.NotificationMessage(title='Update Available',
+                                                          message="There is an update available. Close and restart "
+                                                                  "program to use updated program.")
+                update_popup.SetIcon(wx.Icon(icon))
+                update_popup.Show()
+                print("Done.")
+            else:
+                print("Program is up to date!")
+
+        except Exception as e:
+            print(e)
+            pass
 
 
 if __name__ == '__main__':
