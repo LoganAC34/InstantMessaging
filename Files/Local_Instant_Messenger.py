@@ -38,9 +38,9 @@ else:
 u_separator = '?>:'
 icon = exe + 'vector-chat-icon-png_302635.png'
 
-my_datadir = pathlib.Path.home() / 'AppData/Roaming' / "Local_Instant_Messenger"
+my_data_dir = pathlib.Path.home() / 'AppData/Roaming' / "Local_Instant_Messenger"
 try:
-    my_datadir.mkdir(parents=True)
+    my_data_dir.mkdir(parents=True)
 except FileExistsError:
     pass
 
@@ -258,7 +258,7 @@ class SendPanel(wx.Panel):
         box_send.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(box_send)
 
-    def send_message(self, event):
+    def send_message(self):
         msg = self.text_ctrl.GetValue()
         if msg:
             self.function.append_chat(msg)
@@ -271,7 +271,7 @@ class SendPanel(wx.Panel):
             self.text_ctrl.WriteText('\n')
             # print("Shift + Enter")
         elif unicodeKey == wx.WXK_RETURN:
-            self.send_message(event)
+            self.send_message()
             # print("Just Enter")
         else:
             event.Skip()
@@ -279,13 +279,13 @@ class SendPanel(wx.Panel):
 
 
 class MyFrame(wx.Frame):
-    def __init__(self, parent):
+    def __init__(self):
         super().__init__(parent=None, title=f'Chatting with {receiving_host_name}', name='Local Instant Messenger')
 
         # Remember window size and position
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self._persistMgr = wx.lib.agw.persist.PersistenceManager.Get()
-        _configFile = my_datadir / 'persist-saved-cfg'
+        _configFile = my_data_dir / 'persist-saved-cfg'
         self._persistMgr.SetPersistenceFile(_configFile)
         if not self._persistMgr.RegisterAndRestoreAll(self):
             print("No config file")
@@ -330,14 +330,15 @@ class MyFrame(wx.Frame):
         worker.abort()
         event.Skip()
 
-    def DownloadUpdate(self):
+    @staticmethod
+    def DownloadUpdate():
         try:
             # Get GitHub sha value:
             url = 'https://github.com/LoganAC34/InstantMessaging/raw/master/Local_Instant_Messenger.exe'
             sha_github = hashlib.sha256(url.encode()).hexdigest()
 
             # Get local file sha value:
-            pickle_file = my_datadir / 'sha.pkl'
+            pickle_file = my_data_dir / 'sha.pkl'
             if exists(pickle_file):
                 with open(pickle_file, 'rb') as f:
                     sha_local = pickle.load(f)
@@ -379,6 +380,6 @@ if __name__ == '__main__':
     app = wx.App()
     app.SetAppName('Local Chat')
     app.SetVendorName('Logan')
-    frame = MyFrame(None)
+    frame = MyFrame()
     frame.Show()
     app.MainLoop()
