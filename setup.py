@@ -12,17 +12,26 @@ except FileNotFoundError:
     pass
 shutil.copytree(dir_path + '/Files/', dst)
 
+# Update script
+PyInstaller.__main__.run([
+    dst + 'Update.py',
+    '--distpath', dst,
+    '-F',
+    '--noconsole'
+])
+
 # Main script
+icon = "Local_Instant_Messenger.ico"
 PyInstaller.__main__.run([
     dst + 'Local_Instant_Messenger.py',
     '--distpath', dir_path,
     '-F',
-    # '--noconsole',
-    '--icon', r'.\Files\vector-chat-icon-png_302635.png',
+    '--noconsole',
+    '--icon', rf'.\Files\{icon}',
     # '--hidden-import', 'PYTHONCOM',
     # '--debug=imports',
-    '--add-data', r'.\Files\vector-chat-icon-png_302635.png;.',
-    '--add-data', r'.\Files\Update.py;.',
+    '--add-data', rf'.\Files\{icon};.',
+    '--add-data', dst + 'Update.exe;.'
 ])
 
 shutil.rmtree(dst)

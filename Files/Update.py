@@ -2,27 +2,53 @@ import os
 import pickle
 import shutil
 import subprocess
+import sys
+import tempfile
 import time
 
-from wx import wx
+from win10toast import ToastNotifier
 
 
 def run(downloaded_path, current_path, new_path, pickle_file, new_sha):
-    time.sleep(3)
+    time.sleep(3)  # Wait for main app to close
+
+    print("Remove: " + current_path)
     os.remove(current_path)  # Delete old file
+    print("Move from: " + downloaded_path)
+    print("Move to: " + new_path)
     shutil.move(downloaded_path, new_path)  # Move new one from temp folder
     subprocess.call('ie4uinit.exe -show', shell=True)  # Refresh icons
 
+    print("Pickle file: " + pickle_file)
     # Save current sha value:
     with open(pickle_file, 'wb') as f:
         pickle.dump(new_sha, f)
 
+    """
     # Notification about update
-    update_popup = wx.adv.NotificationMessage(title='Update Done!',
-                                              message="You can now restart the program.")
-    update_popup.SetIcon(wx.Icon('vector-chat-icon-png_302635.png'))
-    update_popup.Show()
+    icon = os.path.join(tempfile.gettempdir(), 'Local_Instant_Messenger.ico')
+    toast = ToastNotifier()
+    toast.show_toast(title='Update Done!',
+                     msg="You can now restart the program.",
+                     icon_path=icon)
+    """
+    print("Run: " + new_path)
+    subprocess.Popen([new_path], start_new_session=True)
+    sys.exit(0)
+    #time.sleep(30)
 
 
 if __name__ == '__main__':
-    run()
+    downloaded_path = r"C:\Users\lcarrozza\AppData\Local\Temp\Local_Instant_Messenger.exe"
+    current_path = r"C:\Users\lcarrozza\Downloads\Local_Instant_Messenger.exe"
+    new_path = r"C:\Users\lcarrozza\Downloads\Local_Instant_Messenger.exe"
+    pickle_file = r"C:\Users\lcarrozza\AppData\Roaming\Local_Instant_Messenger\sha.pkl"
+    new_sha = "12312541y3o5hb1i4u12g3ob51ou2p3hp1ui"
+else:
+    downloaded_path = sys.argv[1]
+    current_path = sys.argv[2]
+    new_path = sys.argv[3]
+    pickle_file = sys.argv[4]
+    new_sha = sys.argv[5]
+
+run(downloaded_path, current_path, new_path, pickle_file, new_sha)

@@ -7,6 +7,8 @@ import socket
 import subprocess
 import sys
 import tempfile
+import time
+import urllib
 from os.path import exists
 from threading import Thread
 from urllib.request import urlopen
@@ -27,6 +29,12 @@ except AttributeError:
     exe = os.path.dirname(os.path.abspath(__file__)) + '\\'
     relative = '\\'.join(exe.split('\\')[:-2]) + '\\'
 
+# Get exe location
+if getattr(sys, 'frozen', False):
+    app_path = sys.executable
+else:
+    app_path = os.path.abspath(__file__)
+
 chatHistory = []
 Logan_PC = 'CADD-13'
 Tyler_PC = 'CADD-4'
@@ -37,7 +45,7 @@ else:
     send_host_name = 'Tyler'
     receiving_host_name = 'Logan'
 u_separator = '?>:'
-icon = exe + 'vector-chat-icon-png_302635.png'
+icon = exe + 'Local_Instant_Messenger.ico'
 
 my_data_dir = pathlib.Path.home() / 'AppData/Roaming' / "Local_Instant_Messenger"
 try:
@@ -331,23 +339,43 @@ class MyFrame(wx.Frame):
     def OnClose(self, event):
         self._persistMgr.SaveAndUnregister()
         worker.abort()
-        # """
+
         if self.Update:
-            py_update = 'Update.py'
-            script_path = os.path.join(tempfile.gettempdir(), py_update)
-            print(exe + py_update)
-            print(os.path.join(tempfile.gettempdir(), os.path.basename(icon)))
-            shutil.copy(exe + py_update, script_path)
-            shutil.copy(exe + icon,  os.path.join(tempfile.gettempdir(), os.path.basename(icon)))
+            # Copy Update script to temp folder
+            py_update = 'Update.exe'
+            src_script_path = exe + py_update
+            dst_script_path = os.path.join(tempfile.gettempdir(), py_update)
+            print("Source: " + src_script_path)
+            print("Paste: " + dst_script_path)
+            shutil.copy(src_script_path, dst_script_path)
+
+            # Copy Notification icon to temp folder
+            src_icon_path = icon
+            dst_icon_path = os.path.join(tempfile.gettempdir(), os.path.basename(icon))
+            print("Source: " + src_icon_path)
+            print("Paste: " + dst_icon_path)
+            shutil.copy(src_icon_path, dst_icon_path)
+
+            # Update script
+            update_script = os.path.join(tempfile.gettempdir(), py_update)
+            subprocess.Popen([update_script,
+                              self.temp_file,
+                              app_path, app_path,
+                              pickle_file, self.sha_github],
+                             start_new_session=True
+                             )
+            sys.exit(0)
+            #time.sleep(30)
             """
-            sys.path.insert(0, tempfile.gettempdir())
-            import Update
-            Update.run(self.temp_file,
-                       os.path.realpath(__file__),
-                       os.path.realpath(__file__),
-                       pickle_file, self.sha_github)
+            t = Thread(target=self.UpdateNow,
+                       args=[self.temp_file,
+                             app_path,
+                             app_path,
+                             pickle_file, self.sha_github]
+                       )
+            t.start()
             """
-        # """
+
         event.Skip()
 
     def CheckForUpdate(self):
@@ -371,8 +399,9 @@ class MyFrame(wx.Frame):
             if self.sha_github != sha_local:
                 self.Update = True
                 # Download GitHub file
-                url_download = "https://github.com/LoganAC34/InstantMessaging/blob/master/Local_Instant_Messenger.exe"
-                self.temp_file = os.path.join(tempfile.gettempdir(), os.path.basename(__file__))
+                url_download = 'https://raw.githubusercontent.com/LoganAC34/' \
+                               'InstantMessaging/master/Local_Instant_Messenger.exe'
+                self.temp_file = os.path.join(tempfile.gettempdir(), os.path.basename(url_download))
                 print(self.temp_file)
 
                 # Download file
@@ -391,8 +420,7 @@ class MyFrame(wx.Frame):
         print("Downloading updated file...")
 
         # Download current file
-        with urlopen(url_download) as in_stream, open(temp_file, 'wb') as out_file:
-            shutil.copyfileobj(in_stream, out_file)
+        urllib.request.urlretrieve(url_download, filename=temp_file)
 
         # Notification about update
         update_popup = wx.adv.NotificationMessage(title='Update Available',
@@ -402,6 +430,13 @@ class MyFrame(wx.Frame):
         update_popup.Show()
 
         print("Done.")
+
+    @staticmethod
+    def UpdateNow(downloaded_path, current_path, new_path, pickle_file, new_sha):
+        print("Running update file")
+        sys.path.insert(0, tempfile.gettempdir())
+        import Update
+        Update.run(downloaded_path, current_path, new_path, pickle_file, new_sha)
 
 
 if __name__ == '__main__':
