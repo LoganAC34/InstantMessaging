@@ -22,6 +22,7 @@ PyInstaller.__main__.run([
     # '--hidden-import', 'PYTHONCOM',
     # '--debug=imports',
     '--add-data', r'.\Files\vector-chat-icon-png_302635.png;.',
+    '--add-data', r'.\Files\Update.py;.',
 ])
 
 shutil.rmtree(dst)
