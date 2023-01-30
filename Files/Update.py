@@ -3,11 +3,7 @@ import pickle
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
-from os.path import exists
-
-from win10toast import ToastNotifier
 
 
 def run(downloaded_path, current_path, new_path, pkl_sha, new_sha, pkl_update):
@@ -33,8 +29,6 @@ def run(downloaded_path, current_path, new_path, pkl_sha, new_sha, pkl_update):
     print("Run: " + new_path)
     subprocess.Popen([new_path], start_new_session=True)
     sys.exit(0)
-    #time.sleep(30)
-
 
 r"""
 if __name__ == '__main__':
@@ -55,4 +49,5 @@ current_path = sys.argv[2]
 new_path = sys.argv[3]
 pkl_sha = sys.argv[4]
 new_sha = sys.argv[5]
-run(downloaded_path, current_path, new_path, pkl_sha, new_sha)
+pkl_update = sys.argv[6]
+run(downloaded_path, current_path, new_path, pkl_sha, new_sha, pkl_update)
