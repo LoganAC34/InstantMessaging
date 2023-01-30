@@ -417,6 +417,12 @@ class MyFrame(wx.Frame):
     @staticmethod
     def DownloadUpdate(url_download, temp_file):
         print("Downloading updated file...")
+        # Notification about update
+        update_popup = wx.adv.NotificationMessage(title='Downloading update...',
+                                                  message="There is an update available. Please wait for it to finish "
+                                                          "downloading before closing the program")
+        update_popup.SetIcon(wx.Icon(icon))
+        update_popup.Show()
 
         # Download current file
         urllib.request.urlretrieve(url_download, filename=temp_file)

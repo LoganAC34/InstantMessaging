@@ -53,5 +53,9 @@ else:
     pickle_file = sys.argv[4]
     new_sha = sys.argv[5]
 """
-
-# run(downloaded_path, current_path, new_path, pickle_file, new_sha)
+downloaded_path = sys.argv[1]
+current_path = sys.argv[2]
+new_path = sys.argv[3]
+pickle_file = sys.argv[4]
+new_sha = sys.argv[5]
+run(downloaded_path, current_path, new_path, pickle_file, new_sha)
