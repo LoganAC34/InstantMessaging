@@ -39,6 +39,7 @@ def run(downloaded_path, current_path, new_path, pickle_file, new_sha):
     #time.sleep(30)
 
 
+r"""
 if __name__ == '__main__':
     downloaded_path = r"C:\Users\lcarrozza\AppData\Local\Temp\Local_Instant_Messenger.exe"
     current_path = r"C:\Users\lcarrozza\Downloads\Local_Instant_Messenger.exe"
@@ -51,5 +52,6 @@ else:
     new_path = sys.argv[3]
     pickle_file = sys.argv[4]
     new_sha = sys.argv[5]
+"""
 
-run(downloaded_path, current_path, new_path, pickle_file, new_sha)
+# run(downloaded_path, current_path, new_path, pickle_file, new_sha)
