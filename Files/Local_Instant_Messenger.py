@@ -402,7 +402,7 @@ class MyFrame(wx.Frame):
                 #self.Update = True
                 # Set Update variable to True
                 with open(pkl_update, 'wb') as f:
-                    pickle.dump(False, f)
+                    pickle.dump(True, f)
 
                 # Download GitHub file
                 url_download = 'https://raw.githubusercontent.com/LoganAC34/' \

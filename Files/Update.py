@@ -22,7 +22,7 @@ def run(downloaded_path, current_path, new_path, pkl_sha, new_sha, pkl_update):
     with open(pkl_sha, 'wb') as f:
         pickle.dump(new_sha, f)
 
-    # Update variable
+    # Set Update variable
     with open(pkl_update, 'wb') as f:
         pickle.dump(False, f)
 
