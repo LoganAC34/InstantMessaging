@@ -17,7 +17,7 @@ PyInstaller.__main__.run([
     dst + 'Update.py',
     '--distpath', dst,
     '-F',
-    #'--noconsole'
+    '--noconsole'
 ])
 
 # Main script
@@ -26,7 +26,7 @@ PyInstaller.__main__.run([
     dst + 'Local_Instant_Messenger.py',
     '--distpath', dir_path,
     '-F',
-    #'--noconsole',
+    '--noconsole',
     '--icon', rf'.\Files\{icon}',
     # '--hidden-import', 'PYTHONCOM',
     # '--debug=imports',

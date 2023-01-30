@@ -52,7 +52,8 @@ try:
 except FileExistsError:
     pass
 
-pickle_file = my_data_dir / 'sha.pkl'
+pkl_sha = my_data_dir / 'sha.pkl'
+pkl_update = my_data_dir / 'update.pkl'
 
 global worker
 
@@ -306,7 +307,10 @@ class MyFrame(wx.Frame):
         self.sub_panel_Send = SendPanel(main_panel)
 
         self.SetIcon(wx.Icon(icon))  # App icon
-        self.Update = False  # Update variable
+        #self.Update = False
+        # Set Update variable to false
+        with open(pkl_update, 'wb') as f:
+            pickle.dump(False, f)
 
         # Set up event handler for any worker thread results
         global worker
@@ -339,7 +343,15 @@ class MyFrame(wx.Frame):
         self._persistMgr.SaveAndUnregister()
         worker.abort()
 
-        if self.Update:
+        # Get Update variable
+        if exists(pkl_update):
+            with open(pkl_update, 'rb') as f:
+                Update = pickle.load(f)
+        else:
+            Update = False
+            print("No local sha value")
+
+        if Update:
             # Copy Update script to temp folder
             py_update = 'Update.exe'
             src_script_path = exe + py_update
@@ -360,20 +372,11 @@ class MyFrame(wx.Frame):
             subprocess.Popen([update_script,
                               self.temp_file,
                               app_path, app_path,
-                              pickle_file, self.sha_github],
+                              pkl_sha, self.sha_github,
+                              pkl_update],
                              start_new_session=True
                              )
             sys.exit(0)
-            #time.sleep(30)
-            """
-            t = Thread(target=self.UpdateNow,
-                       args=[self.temp_file,
-                             app_path,
-                             app_path,
-                             pickle_file, self.sha_github]
-                       )
-            t.start()
-            """
 
         event.Skip()
 
@@ -385,8 +388,8 @@ class MyFrame(wx.Frame):
             self.sha_github = sha_github['sha']
 
             # Get local file sha value:
-            if exists(pickle_file):
-                with open(pickle_file, 'rb') as f:
+            if exists(pkl_sha):
+                with open(pkl_sha, 'rb') as f:
                     sha_local = pickle.load(f)
             else:
                 sha_local = "None"
@@ -396,7 +399,11 @@ class MyFrame(wx.Frame):
             print("Local sha: " + sha_local)
 
             if self.sha_github != sha_local:
-                self.Update = True
+                #self.Update = True
+                # Set Update variable to True
+                with open(pkl_update, 'wb') as f:
+                    pickle.dump(False, f)
+
                 # Download GitHub file
                 url_download = 'https://raw.githubusercontent.com/LoganAC34/' \
                                'InstantMessaging/master/Local_Instant_Messenger.exe'
@@ -444,11 +451,11 @@ class MyFrame(wx.Frame):
         print("Done.")
 
     @staticmethod
-    def UpdateNow(downloaded_path, current_path, new_path, pickle_file, new_sha):
+    def UpdateNow(downloaded_path, current_path, new_path, pkl_sha, new_sha, pkl_update):
         print("Running update file")
         sys.path.insert(0, tempfile.gettempdir())
         import Update
-        Update.run(downloaded_path, current_path, new_path, pickle_file, new_sha)
+        Update.run(downloaded_path, current_path, new_path, pkl_sha, new_sha, pkl_update)
 
 
 if __name__ == '__main__':
