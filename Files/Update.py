@@ -20,6 +20,7 @@ def run(downloaded_path, current_path, new_path, pickle_file, new_sha):
     subprocess.call('ie4uinit.exe -show', shell=True)  # Refresh icons
 
     print("Pickle file: " + pickle_file)
+    print("New sha:" + new_sha)
     # Save current sha value:
     with open(pickle_file, 'wb') as f:
         pickle.dump(new_sha, f)

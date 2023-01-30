@@ -7,7 +7,6 @@ import socket
 import subprocess
 import sys
 import tempfile
-import time
 import urllib
 from os.path import exists
 from threading import Thread
