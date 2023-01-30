@@ -17,7 +17,7 @@ PyInstaller.__main__.run([
     dst + 'Update.py',
     '--distpath', dst,
     '-F',
-    '--noconsole'
+    #'--noconsole'
 ])
 
 # Main script
