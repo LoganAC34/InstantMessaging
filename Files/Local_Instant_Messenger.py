@@ -425,7 +425,14 @@ class MyFrame(wx.Frame):
         update_popup.Show()
 
         # Download current file
-        urllib.request.urlretrieve(url_download, filename=temp_file)
+        while True:
+            try:
+                urllib.request.urlretrieve(url_download, filename=temp_file)
+                break
+            except Exception as e:
+                print("Download failed. Trying again.")
+                print(e)
+                pass
 
         # Notification about update
         update_popup = wx.adv.NotificationMessage(title='Update Available',

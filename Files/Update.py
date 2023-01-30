@@ -25,14 +25,6 @@ def run(downloaded_path, current_path, new_path, pickle_file, new_sha):
     with open(pickle_file, 'wb') as f:
         pickle.dump(new_sha, f)
 
-    """
-    # Notification about update
-    icon = os.path.join(tempfile.gettempdir(), 'Local_Instant_Messenger.ico')
-    toast = ToastNotifier()
-    toast.show_toast(title='Update Done!',
-                     msg="You can now restart the program.",
-                     icon_path=icon)
-    """
     print("Run: " + new_path)
     subprocess.Popen([new_path], start_new_session=True)
     sys.exit(0)
