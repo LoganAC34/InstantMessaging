@@ -399,10 +399,6 @@ class MyFrame(wx.Frame):
             print("Local sha: " + sha_local)
 
             if self.sha_github != sha_local:
-                #self.Update = True
-                # Set Update variable to True
-                with open(pkl_update, 'wb') as f:
-                    pickle.dump(True, f)
 
                 # Download GitHub file
                 url_download = 'https://raw.githubusercontent.com/LoganAC34/' \
@@ -435,20 +431,24 @@ class MyFrame(wx.Frame):
         while True:
             try:
                 urllib.request.urlretrieve(url_download, filename=temp_file)
+
+                # Set Update variable to True
+                with open(pkl_update, 'wb') as f:
+                    pickle.dump(True, f)
+
+                # Notification about update
+                update_popup = wx.adv.NotificationMessage(title='Update Available',
+                                                          message="There is an update available. Close and restart "
+                                                                  "program to use updated program.")
+                update_popup.SetIcon(wx.Icon(icon))
+                update_popup.Show()
+                print("Done.")
+
                 break
             except Exception as e:
                 print("Download failed. Trying again.")
                 print(e)
                 pass
-
-        # Notification about update
-        update_popup = wx.adv.NotificationMessage(title='Update Available',
-                                                  message="There is an update available. Close and restart "
-                                                          "program to use updated program.")
-        update_popup.SetIcon(wx.Icon(icon))
-        update_popup.Show()
-
-        print("Done.")
 
     @staticmethod
     def UpdateNow(downloaded_path, current_path, new_path, pkl_sha, new_sha, pkl_update):
