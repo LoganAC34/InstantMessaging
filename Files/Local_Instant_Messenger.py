@@ -307,7 +307,6 @@ class MyFrame(wx.Frame):
         self.sub_panel_Send = SendPanel(main_panel)
 
         self.SetIcon(wx.Icon(icon))  # App icon
-        #self.Update = False
         # Set Update variable to false
         with open(pkl_update, 'wb') as f:
             pickle.dump(False, f)
