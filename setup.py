@@ -26,12 +26,13 @@ PyInstaller.__main__.run([
     dst + 'Local_Instant_Messenger.py',
     '--distpath', dir_path,
     '-F',
-    '--noconsole',
+    #'--noconsole',
     '--icon', rf'.\Files\{icon}',
     # '--hidden-import', 'PYTHONCOM',
     # '--debug=imports',
     '--add-data', rf'.\Files\{icon};.',
-    '--add-data', dst + 'Update.exe;.'
+    '--add-data', dst + 'Update.exe;.',
+    '--add-data', r'.\Files\GetIP.py;.'
 ])
 
 shutil.rmtree(dst)

@@ -17,6 +17,10 @@ import wx
 import wx.adv
 import wx.lib.agw.persist
 import wx.lib.scrolledpanel
+from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
+from cryptography.fernet import Fernet
+
+import GetIP
 
 # Relative and exe paths
 try:
@@ -34,24 +38,47 @@ if getattr(sys, 'frozen', False):
 else:
     app_path = os.path.abspath(__file__)
 
-chatHistory = []
-Logan_PC = 'CADD-13'
-Tyler_PC = 'CADD-4'
-if socket.gethostname() == Logan_PC:
-    send_host_name = 'Logan'
-    receiving_host_name = 'Tyler'
+# User IPs
+debug = False
+if debug:
+    user_1 = socket.gethostbyname('CADD-13')
+    user_2 = socket.gethostbyname('CADD-7')
 else:
-    send_host_name = 'Tyler'
-    receiving_host_name = 'Logan'
+    user_1 = GetIP.user_ip('lcarrozza')
+    user_2 = GetIP.user_ip('truby')
+
+# PC IP and names
+cur_IP = socket.gethostbyname(socket.gethostname())
+PC_local_IP = cur_IP
+if cur_IP == user_1:
+    PC_Local_Name = 'Logan'
+    PC_Other_Name = 'Tyler'
+    PC_Other_IP = user_2
+else:
+    PC_Local_Name = 'Tyler'
+    PC_Other_Name = 'Logan'
+    PC_Other_IP = user_1
+
+print("Local PC: " + PC_Local_Name + " - " + PC_local_IP)
+print("Remote PC: " + PC_Other_Name + " - " + PC_Other_IP)
+
+# Global Variables
+chatHistory = []  # Initialize chat history
+chatHistory_names = []  # Initialize chat history
+loop_wait = 0.001
 u_separator = '?>:'
 icon = exe + 'Local_Instant_Messenger.ico'
+key = b'zBfp5pkJ_-UniuIQI0dzMuf3mTIm6DRkpURXoZpA-Yo='
+cipher_key = Fernet(key)
 
+# App data folder
 my_data_dir = pathlib.Path.home() / 'AppData/Roaming' / "Local_Instant_Messenger"
 try:
     my_data_dir.mkdir(parents=True)
 except FileExistsError:
     pass
 
+# Pickle variable files
 pkl_sha = my_data_dir / 'sha.pkl'
 pkl_update = my_data_dir / 'update.pkl'
 
@@ -127,18 +154,9 @@ class SocketWorkerThread(Thread):
 
     def run(self):
         """Run Worker Thread."""
-        host = socket.gethostname()
-        server_ip = socket.gethostbyname(host)
         receive_port = 3434
-        if host == Logan_PC:
-            send_host = Tyler_PC
-            send_port = 3434
-        else:
-            send_host = Logan_PC
-            send_port = 3434
-
-        send_host = socket.gethostbyname(send_host)
-        _thread.start_new_thread(self.run_server, (server_ip, receive_port))
+        send_port = 3434
+        _thread.start_new_thread(self.run_server, (PC_local_IP, receive_port))
         self._want_abort = None
 
         while True:
@@ -146,20 +164,19 @@ class SocketWorkerThread(Thread):
                 while True:
                     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     try:
-                        print("Connecting to " + send_host + ":" + str(send_port))
+                        print("Connecting to " + PC_Other_IP + ":" + str(send_port))
                         client.settimeout(0.1)
-                        client.connect((send_host, send_port))
-                        client.send(self._msg.encode("UTF-8"))
+                        client.connect((PC_Other_IP, send_port))
+                        encrypted_msg = cipher_key.encrypt(self._msg.encode())  # Encrypt message
+                        client.send(encrypted_msg)
                         print(self._msg)
-                        self._msg = ""
-                        break
                     except Exception as e:
                         print(e)
                         batchMessage = self._msg.replace(u_separator, ': ')
                         batchMessage = batchMessage.replace('\n', ' ')
-                        subprocess.call(f'msg /SERVER:{send_host} * /TIME:60 "{batchMessage}"', shell=True)
-                        self._msg = ""
-                        break
+                        subprocess.call(f'msg /SERVER:{PC_Other_IP} * /TIME:60 "{batchMessage}"', shell=True)
+                    self._msg = ""
+                    break
             if self._want_abort:
                 break
 
@@ -181,7 +198,10 @@ class SocketWorkerThread(Thread):
         print("Client accepted from", address)
         client.settimeout(0.1)
         msg = client.recv(1024).decode("UTF-8")
-        wx.PostEvent(self._notify_window, ReceiveMessage(msg))
+        # print(msg)
+        decrypted_msg = cipher_key.decrypt(msg).decode("UTF-8")  # Decrypt message
+        # print(decrypted_msg)
+        wx.PostEvent(self._notify_window, ReceiveMessage(decrypted_msg))
 
     def send_message(self, msg):
         # send_message worker thread.
@@ -195,6 +215,8 @@ class SocketWorkerThread(Thread):
 class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent):
         wx.ScrolledWindow.__init__(self, parent)
+        self.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
+        self.panel = self
 
         # box = wx.StaticBox(self, label="", size=wx.Size(1000, 1000))
         # self.sizer_log = wx.StaticBoxSizer(wx.VERTICAL, self)
@@ -202,22 +224,27 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
         # self.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
 
         # Font Height
-        font = wx.Font()
+        self.font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
         self.dc = wx.ScreenDC()
-        self.dc.SetFont(font)
+        self.dc.SetFont(self.font)
         self.single_height = self.dc.GetMultiLineTextExtent('')
+        """
+        # Chat log - Names
+        self.chat_box_names = wx.StaticText(self, style=wx.TE_MULTILINE | wx.ST_NO_AUTORESIZE)
+        self.chat_box_names.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
+        self.chat_box_names.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
+        self.chat_box_names.SetFont(font)
 
-        # Chat log
-        self.chat_box = wx.StaticText(self, style=wx.TE_MULTILINE | wx.ST_NO_AUTORESIZE)
-        self.chat_box.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
-        self.chat_box.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
-        self.chat_box.SetFont(font)
-        # self.sizer_log.Add(self.chat_box, 1, wx.ALL | wx.EXPAND, 0)
-
+        # Chat log - Messages
+        self.chat_box_msg = wx.StaticText(self, style=wx.TE_MULTILINE | wx.ST_NO_AUTORESIZE)
+        self.chat_box_msg.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
+        self.chat_box_msg.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
+        self.chat_box_msg.SetFont(font)
+        """
         # Sizer
-        self.main_sizer = wx.BoxSizer()
-        # self.main_sizer.Add(self.sizer_log, 1, wx.EXPAND)
-        self.main_sizer.Add(self.chat_box, 1, wx.EXPAND)
+        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+        # self.main_sizer.Add(self.chat_box_names, 0, wx.EXPAND, 5)
+        # self.main_sizer.Add(self.chat_box_msg, 1, wx.EXPAND)
         self.SetSizer(self.main_sizer)
 
     def append_chat(self, msg):
@@ -230,21 +257,67 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
                 popup.SetIcon(wx.Icon(icon))
                 popup.Show()
         else:
-            u = send_host_name
-        u += ':'
-        msg_padded = msg.replace('\n', '\n' + 16 * ' ')
-        msg = f'{u:<{10}}{msg_padded}'
+            u = PC_Local_Name
+        u += ': '
+        # msg_padded = msg.replace('\n', '\n' + 16 * ' ')
+        # msg = f'{u:<{10}}{msg_padded}'
+        """
         chatHistory.append(msg)
         chatHistory_Display = ''
         for message in chatHistory:
             chatHistory_Display += message + '\n'
-        self.chat_box.SetLabel(chatHistory_Display)
+        self.chat_box_msg.SetLabel(chatHistory_Display)
+
+        chatHistory_names.append(u + " ")
+        chatHistory_Display_names = ''
+        for username in chatHistory_names:
+            chatHistory_Display_names += username + '\n'
+        self.chat_box_names.SetLabel(chatHistory_Display_names)
+
         size = self.dc.GetMultiLineTextExtent(chatHistory_Display)
         size.Height = size.Height - self.single_height.Height * 2
-        self.chat_box.SetMinSize(size)
-        self.Layout()
+        self.chat_box_msg.SetMinSize(size)
+        self.chat_box_names.SetMinSize(size)
+        """
+        message_sizer = wx.BoxSizer()
+
+        # Chat log - Names
+        ui_name = wx.TextCtrl(self, value=u,
+                              style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_NO_VSCROLL | wx.BORDER_NONE
+                                    | wx.TE_RIGHT)
+        ui_name.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
+        # Had to move foreground color to after it gets added to the panel so the color was right (otherwise was reset)
+        ui_name.SetMinSize(wx.Size(50, 10))
+        ui_name.SetFont(self.font)
+        message_sizer.Add(ui_name, 0, wx.EXPAND)
+
+        # Chat log - Messages
+        ui_message = ExpandoTextCtrl(self, value=msg,
+                                     style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_NO_VSCROLL | wx.BORDER_NONE
+                                           | wx.TE_AUTO_URL | wx.TE_BESTWRAP)
+        ui_message.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
+        # Had to move foreground color to after it gets added to the panel so the color was right (otherwise was reset)
+        ui_message.SetFont(self.font)
+        message_sizer.Add(ui_message, 1, wx.ALL)
+        #self.Bind(EVT_ETC_LAYOUT_NEEDED, self.OnRefit, ui_message)
+
+        self.main_sizer.Add(message_sizer, flag=wx.TOP | wx.EXPAND)
+        ui_name.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
+        ui_message.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
+        #self.main_sizer.Show(message_sizer, show=False, recursive=True)
+        #self.main_sizer.Layout()
+        #self.Layout()
         self.SetupScrolling(scrollToTop=False)
-        self.Scroll(0, size.Height)
+        self.Scroll(0, 10000000)
+        #self.Fit()
+
+    def OnRefit(self, evt):
+        # The Expando control will redo the layout of the
+        # sizer it belongs to, but sometimes this may not be
+        # enough, so it will send us this event, so we can do any
+        # other layout adjustments needed.  In this case we'll
+        # just resize the frame to fit the new needs of the sizer.
+        self.Fit()
 
 
 class SendPanel(wx.Panel):
@@ -269,12 +342,12 @@ class SendPanel(wx.Panel):
         box_send.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(box_send)
 
-    def send_message(self):
+    def send_message(self, event=None):
         msg = self.text_ctrl.GetValue()
         if msg:
             self.function.append_chat(msg)
             self.text_ctrl.Clear()
-            worker.send_message(send_host_name + u_separator + msg)
+            worker.send_message(PC_Local_Name + u_separator + msg)
 
     def key_code(self, event):
         unicodeKey = event.GetUnicodeKey()
@@ -291,7 +364,8 @@ class SendPanel(wx.Panel):
 
 class MyFrame(wx.Frame):
     def __init__(self):
-        super().__init__(parent=None, title=f'Chatting with {receiving_host_name}', name='Local Instant Messenger')
+        super().__init__(parent=None, title=f'Chatting with {PC_Other_Name}', name='Local Instant Messenger')
+        self.SetDoubleBuffered(True)
 
         # Remember window size and position
         self.Bind(wx.EVT_CLOSE, self.OnClose)
@@ -436,9 +510,8 @@ class MyFrame(wx.Frame):
                     pickle.dump(True, f)
 
                 # Notification about update
-                update_popup = wx.adv.NotificationMessage(title='Update Available',
-                                                          message="There is an update available. Close and restart "
-                                                                  "program to use updated program.")
+                update_popup = wx.adv.NotificationMessage(title='Download Complete!',
+                                                          message="Close the program to use updated version.")
                 update_popup.SetIcon(wx.Icon(icon))
                 update_popup.Show()
                 print("Done.")

@@ -88,7 +88,7 @@ class WorkerThread(Thread):
                         #time.sleep(1)
                     #client.close()
                     #client = socket.socket()
-                    #client.connect_ex((send_host, send_port))
+                    #client.connect_ex((PC_Other_IP, send_port))
             if self._want_abort:
                 break
 
