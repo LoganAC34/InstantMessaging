@@ -53,7 +53,7 @@ pkl_update = my_data_dir / 'update.pkl'
 plk_IP = my_data_dir / 'ip.pkl'
 
 # User IPs
-debug = False
+debug = True
 splash_screen_toggle = False
 if splash_screen_toggle:
     q = queue.Queue()
@@ -135,9 +135,26 @@ wx.PostEvent(self._notify_window, ReceiveMessage(msg)) # Goes in GUI function to
 self._notify_window = notify_window # Goes in outside function to carry data
 """
 
+# Sent Method Event ---------------------------------------------
+EVT_SENT_THROUGH_APP_ID = wx.ID_ANY  # Define notification event for thread completion
+
+
+def EVT_SENT_THROUGH_APP(win, func):
+    # Define Result Event.
+    win.Connect(-1, -1, EVT_SENT_THROUGH_APP_ID, func)
+
+
+class SentThroughApp(wx.PyEvent):
+    # Simple event to carry arbitrary result data.
+    def __init__(self, data):
+        # Init Result Event.
+        wx.PyEvent.__init__(self)
+        self.SetEventType(EVT_SENT_THROUGH_APP_ID)
+        self.data = data
+
+
 # Receive message event ---------------------------------------------
 EVT_RECEIVE_MSG_ID = wx.ID_ANY  # Define notification event for thread completion
-ID_TRIGGER_FUNC = wx.ID_ANY
 
 
 def EVT_RECEIVE_MSG(win, func):
@@ -186,11 +203,13 @@ class SocketWorkerThread(Thread):
                         encrypted_msg = cipher_key.encrypt(self._msg.encode())  # Encrypt message
                         client.send(encrypted_msg)
                         print(self._msg)
+                        wx.PostEvent(self._notify_window, SentThroughApp(True))
                     except Exception as e:
                         print(e)
                         batchMessage = self._msg.replace(u_separator, ': ')
                         batchMessage = batchMessage.replace('\n', ' ')
                         subprocess.call(f'msg /SERVER:{PC_Other_IP} * /TIME:60 "{batchMessage}"', shell=True)
+                        wx.PostEvent(self._notify_window, SentThroughApp(False))
                     self._msg = ""
                     break
             if self._want_abort:
@@ -228,6 +247,33 @@ class SocketWorkerThread(Thread):
 
 
 # GUI --------------------------------------------------------------------------------------
+class StatusText(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+
+        # Status text
+        self.status = wx.StaticText(self, label="", style=wx.BORDER_NONE)
+        self.status.SetBackgroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
+        # status.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
+
+        # Bind
+        EVT_SENT_THROUGH_APP(self, self.change_status)  # Set event for receive message
+
+        # sizer
+        self.status_sizer = wx.BoxSizer()
+        self.status_sizer.Add(self.status, 1, flag=wx.EXPAND | wx.ALL)
+        self.SetSizer(self.status_sizer)
+
+    def change_status(self, event):
+        if event:
+            self.status.SetLabelText("Sent via messenger app.")
+        else:
+            self.status.SetLabelText("Sent via Windows popup.")
+        self.status_sizer.Layout()
+
+
+
+
 class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent):
         wx.ScrolledWindow.__init__(self, parent)
@@ -259,8 +305,6 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
         """
         # Sizer
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
-        # self.main_sizer.Add(self.chat_box_names, 0, wx.EXPAND, 5)
-        # self.main_sizer.Add(self.chat_box_msg, 1, wx.EXPAND)
         self.SetSizer(self.main_sizer)
 
     def append_chat(self, msg):
@@ -391,6 +435,7 @@ class MyFrame(wx.Frame):
 
         # Panels
         main_panel = wx.Panel(self)
+        self.status_text = StatusText(main_panel)
         self.sub_panel_Log = LogPanel(main_panel)
         self.sub_panel_Send = SendPanel(main_panel)
 
@@ -405,6 +450,7 @@ class MyFrame(wx.Frame):
 
         # Sizer
         main_sizer = wx.BoxSizer(wx.VERTICAL)
+        main_sizer.Add(self.status_text, 0, wx.EXPAND, 5)
         main_sizer.Add(self.sub_panel_Log, 1, wx.EXPAND, 5)
         main_sizer.Add(self.sub_panel_Send, 0, wx.EXPAND | wx.ALL, 5)
         main_panel.SetSizer(main_sizer)
@@ -424,7 +470,10 @@ class MyFrame(wx.Frame):
         self.CheckForUpdate()
 
     def ReceiveMsg(self, event):
-        self.sub_panel_Log.append_chat(event.data)
+        if type(event.data) is bool:
+            self.status_text.change_status(event.data)
+        else:
+            self.sub_panel_Log.append_chat(event.data)
 
     def OnClose(self, event):
         self._persistMgr.SaveAndUnregister()
