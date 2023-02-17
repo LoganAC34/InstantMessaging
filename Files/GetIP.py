@@ -1,4 +1,3 @@
-import pathlib
 import pickle
 import queue
 import socket
@@ -7,11 +6,9 @@ import threading
 import time
 from os.path import exists
 
-import kthread
-
 
 def user_ip(user, pkl_ip):
-    timeout = 0.5
+    timeout = 0.3
     q = queue.Queue()
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -23,8 +20,10 @@ def user_ip(user, pkl_ip):
             with open(pkl_ip, 'rb') as f:
                 ip_dict = pickle.load(f)
             user_ip = ip_dict[user]
+
             proc = subprocess.run(f'query user /server:{user_ip}', startupinfo=startupinfo, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, shell=True, timeout=timeout)
+
             if user.upper() in str(proc.stdout.decode("UTF-8")).upper():
                 set_ip(user, user_ip)
                 return user_ip
@@ -45,41 +44,51 @@ def user_ip(user, pkl_ip):
         with open(pkl_ip, 'wb') as f:
             pickle.dump(ip_dict, f)
 
+    """
     def getips():
-        # Gets a list of valid IPs on network (Might be considered a trojan by Windows Defender)
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         ipadressen = {}
 
-        def ping(ipadresse):
+        def ping(ipadresse, q):
             try:
-                outputcap = subprocess.run([f'ping', ipadresse, '-n', '1'],
-                                           startupinfo=startupinfo,
-                                           capture_output=True)  # sends only one package, faster
+                # sends only one package, faster
+                outputcap = subprocess.run([f'ping', ipadresse, '-n', '1'], capture_output=True,
+                                           startupinfo=startupinfo, timeout=0.001)
                 ipadressen[ipadresse] = outputcap
-            except Exception as Fehler:
-                print(Fehler)
+                q.put(ipadressen)
+            except Exception as e:
+                print(e)
 
-        t = [kthread.KThread(target=ping, name=f"ipgetter{ipend}", args=(f'192.168.16.{ipend}',)) for ipend in
-             range(255)]  # prepares threads
-        [kk.start() for kk in t]  # starts 255 threads
-        print('Searching network for valid IPs')
-        # while len(ipadressen) < 255:
-        # print('Searching network')
-        # sleep(0.001)
+        # prepares threads
+        q = queue.Queue()
+        threads = []
+        for ipend in range(255):
+            t = threading.Thread(target=ping, args=(f'192.168.16.{ipend}', q))
+            threads.append(t)
+            t.start()
+
+        # Wait for all of them to finish
+        for x in threads:
+            x.join()
+        ipadressen = q.get(block=False)
+
         alldevices = []
         for key, item in ipadressen.items():
-            if not 'unreachable' in item.stdout.decode('utf-8') and 'failure' not in item.stdout.decode(
-                    'utf-8'):  # checks if there wasn't neither general failure nor 'unreachable host'
+            # checks if there wasn't neither general failure nor 'unreachable host'
+            if 'unreachable' not in item.stdout.decode('utf-8') and 'failure' not in item.stdout.decode('utf-8'):
                 alldevices.append(key)
+        alldevices.sort()
         return alldevices
+    """
 
     def worker(ip):
         try:
             proc = subprocess.run(f'query user /server:{ip}', startupinfo=startupinfo, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE,
-                                  shell=True, timeout=timeout)
+                                  stderr=subprocess.PIPE, shell=True, timeout=timeout)
+
             if user.upper() in str(proc.stdout.decode("UTF-8")).upper():
                 q.put(ip)
-                # print("Tyler: " + ip)
         except:
             pass
 
@@ -93,16 +102,21 @@ def user_ip(user, pkl_ip):
         results = ''
         print(f'Searching IPs for user "{user}"')
         for ip in all_ips:
+            start = time.time()
+            #print(f"Starting thread ip:{ip}")
             try:
                 results = q.get(block=False, timeout=timeout)
                 break
             except:
-                # print(f"Starting thread {n}")
                 t = threading.Thread(target=worker, args=[ip], daemon=True)
-                time.sleep(timeout)
                 t.start()
-                threading.Timer(timeout, after_timeout).start()
+                time.sleep(0.1)
+                #threading.Timer(timeout, after_timeout).start()
                 n += 1
+            lap = time.time() - start
+            print(f'{ip} took {lap}')
+            if lap > 0.3:
+                print(f'{ip} took {lap}')
         return results
 
     def main(user):
@@ -126,14 +140,16 @@ def user_ip(user, pkl_ip):
             return user_ip
         else:
             # Test to see if queried user is current PC
-            proc = subprocess.run(f'query user', startupinfo=startupinfo, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE,
-                                  shell=True, timeout=timeout)
+            proc = subprocess.run(f'query user', stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                  shell=True, startupinfo=startupinfo)
             if user.upper() in str(proc.stdout.decode("UTF-8")).upper():
                 out = socket.gethostbyname(socket.gethostname())
             else:  # If not, search IPs on network for user
-                allIPs = getips()
+                allIPs = []
+                for ipend in range(255):
+                    allIPs.append(f'192.168.16.{ipend}')
                 print(allIPs)
+
                 out = search_user(allIPs)
                 if type(out) is list:
                     out = out[0]

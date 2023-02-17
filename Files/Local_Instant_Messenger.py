@@ -1,4 +1,3 @@
-import _thread
 import os
 import pathlib
 import pickle
@@ -7,24 +6,27 @@ import socket
 import subprocess
 import sys
 import tempfile
-import urllib
+import threading
 from os.path import exists
 from threading import Thread
-from urllib.request import urlopen
 
 import requests
+from tempfile import SpooledTemporaryFile
 import wx
 import wx.adv
 import wx.lib.agw.persist
 import wx.lib.scrolledpanel
-from wx.lib.expando import ExpandoTextCtrl, EVT_ETC_LAYOUT_NEEDED
+from wx.lib.expando import ExpandoTextCtrl
 from cryptography.fernet import Fernet
+import queue
 
 import GetIP
+import SplashScreen
 
 # Relative and exe paths
 try:
     # we are running in a bundle
+    # noinspection PyProtectedMember
     exe = sys._MEIPASS + '\\'
     relative = os.path.dirname(sys.executable) + '\\'
 except AttributeError:
@@ -52,6 +54,11 @@ plk_IP = my_data_dir / 'ip.pkl'
 
 # User IPs
 debug = False
+splash_screen_toggle = False
+if splash_screen_toggle:
+    q = queue.Queue()
+    splash_screen = threading.Thread(target=SplashScreen.main, args=(q, None))
+    splash_screen.start()
 if debug:
     user_1 = socket.gethostbyname('CADD-13')
     user_2 = socket.gethostbyname('CADD-7')
@@ -61,6 +68,7 @@ else:
 
 # PC IP and names
 cur_IP = socket.gethostbyname(socket.gethostname())
+
 PC_local_IP = cur_IP
 if cur_IP == user_1:
     PC_Local_Name = 'Logan'
@@ -70,6 +78,13 @@ else:
     PC_Local_Name = 'Tyler'
     PC_Other_Name = 'Logan'
     PC_Other_IP = user_1
+
+if splash_screen_toggle:
+    # noinspection PyUnboundLocalVariable
+    q.put(True)
+    # noinspection PyUnboundLocalVariable
+    splash_screen.join()
+    del splash_screen
 
 print("Local PC: " + PC_Local_Name + " - " + PC_local_IP)
 print("Remote PC: " + PC_Other_Name + " - " + PC_Other_IP)
@@ -157,7 +172,7 @@ class SocketWorkerThread(Thread):
         """Run Worker Thread."""
         receive_port = 3434
         send_port = 3434
-        _thread.start_new_thread(self.run_server, (PC_local_IP, receive_port))
+        threading.Thread(target=self.run_server, args=(PC_local_IP, receive_port)).start()
         self._want_abort = None
 
         while True:
@@ -193,7 +208,7 @@ class SocketWorkerThread(Thread):
         print("Bind successful: " + host)
         server.listen(5)
         while True:
-            _thread.start_new_thread(self.handle_connection, server.accept())
+            threading.Thread(target=self.handle_connection, args=server.accept()).start()
 
     def handle_connection(self, client, address):
         print("Client accepted from", address)
@@ -284,8 +299,7 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
 
         # Chat log - Names
         ui_name = wx.TextCtrl(self, value=u,
-                              style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_NO_VSCROLL | wx.BORDER_NONE
-                                    | wx.TE_RIGHT)
+                              style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_NO_VSCROLL | wx.BORDER_NONE | wx.TE_RIGHT)
         ui_name.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
         # Had to move foreground color to after it gets added to the panel so the color was right (otherwise was reset)
         ui_name.SetMinSize(wx.Size(50, 10))
@@ -293,24 +307,23 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
         message_sizer.Add(ui_name, 0, wx.EXPAND)
 
         # Chat log - Messages
-        ui_message = ExpandoTextCtrl(self, value=msg,
-                                     style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_NO_VSCROLL | wx.BORDER_NONE
-                                           | wx.TE_AUTO_URL | wx.TE_BESTWRAP)
+        ui_message = ExpandoTextCtrl(self, value=msg, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_NO_VSCROLL
+                                                            | wx.BORDER_NONE | wx.TE_AUTO_URL | wx.TE_BESTWRAP)
         ui_message.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
         # Had to move foreground color to after it gets added to the panel so the color was right (otherwise was reset)
         ui_message.SetFont(self.font)
         message_sizer.Add(ui_message, 1, wx.ALL)
-        #self.Bind(EVT_ETC_LAYOUT_NEEDED, self.OnRefit, ui_message)
+        # self.Bind(EVT_ETC_LAYOUT_NEEDED, self.OnRefit, ui_message)
 
         self.main_sizer.Add(message_sizer, flag=wx.TOP | wx.EXPAND)
         ui_name.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
         ui_message.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
-        #self.main_sizer.Show(message_sizer, show=False, recursive=True)
-        #self.main_sizer.Layout()
-        #self.Layout()
+        # self.main_sizer.Show(message_sizer, show=False, recursive=True)
+        # self.main_sizer.Layout()
+        # self.Layout()
         self.SetupScrolling(scrollToTop=False)
         self.Scroll(0, 10000000)
-        #self.Fit()
+        # self.Fit()
 
     def OnRefit(self, evt):
         # The Expando control will redo the layout of the
@@ -458,7 +471,8 @@ class MyFrame(wx.Frame):
         try:
             # Get GitHub sha value:
             url_sha = 'https://api.github.com/repos/LoganAC34/InstantMessaging/contents/Local_Instant_Messenger.exe'
-            sha_github = requests.get(url_sha).json()
+            session = requests.Session()
+            sha_github = session.get(url_sha).json()
             self.sha_github = sha_github['sha']
 
             # Get local file sha value:
@@ -504,7 +518,15 @@ class MyFrame(wx.Frame):
         # Download current file
         while True:
             try:
-                urllib.request.urlretrieve(url_download, filename=temp_file)
+                temp = SpooledTemporaryFile()
+                session = requests.Session()
+                resp = session.get(url_download)
+                temp.write(resp.content)
+                temp.seek(0)
+
+                # Write to file
+                with open(temp_file, 'wb') as local_file:
+                    local_file.write(resp.content)
 
                 # Set Update variable to True
                 with open(pkl_update, 'wb') as f:
@@ -537,4 +559,7 @@ if __name__ == '__main__':
     app.SetVendorName('Logan')
     frame = MyFrame()
     frame.Show()
+    frame.SetWindowStyle(wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP)
+    frame.SetWindowStyle(wx.DEFAULT_FRAME_STYLE)
     app.MainLoop()
+    del app
