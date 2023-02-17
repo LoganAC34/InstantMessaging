@@ -53,7 +53,7 @@ pkl_update = my_data_dir / 'update.pkl'
 plk_IP = my_data_dir / 'ip.pkl'
 
 # User IPs
-debug = True
+debug = False
 splash_screen_toggle = False
 if splash_screen_toggle:
     q = queue.Queue()
