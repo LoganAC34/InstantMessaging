@@ -1,6 +1,7 @@
 import os
 import pathlib
 import pickle
+import queue
 import shutil
 import socket
 import subprocess
@@ -8,17 +9,15 @@ import sys
 import tempfile
 import threading
 from os.path import exists
-from threading import Thread
+from tempfile import SpooledTemporaryFile
 
 import requests
-from tempfile import SpooledTemporaryFile
 import wx
 import wx.adv
 import wx.lib.agw.persist
 import wx.lib.scrolledpanel
-from wx.lib.expando import ExpandoTextCtrl
 from cryptography.fernet import Fernet
-import queue
+from wx.lib.expando import ExpandoTextCtrl
 
 import GetIP
 import SplashScreen
@@ -38,7 +37,7 @@ except AttributeError:
 if getattr(sys, 'frozen', False):
     app_path = sys.executable
 else:
-    app_path = os.path.abspath(__file__)
+    app_path = r"C:\Users\lcarrozza\Downloads\Local_Instant_Messenger.exe"  # os.path.abspath(__file__)
 
 # App data folder
 my_data_dir = pathlib.Path.home() / 'AppData/Roaming' / "Local_Instant_Messenger"
@@ -53,11 +52,12 @@ pkl_update = my_data_dir / 'update.pkl'
 plk_IP = my_data_dir / 'ip.pkl'
 
 # User IPs
-debug = False
+debug = True
 splash_screen_toggle = False
 if splash_screen_toggle:
     q = queue.Queue()
     splash_screen = threading.Thread(target=SplashScreen.main, args=(q, None))
+    splash_screen.daemon = True
     splash_screen.start()
 if debug:
     user_1 = socket.gethostbyname('CADD-13')
@@ -172,25 +172,27 @@ class ReceiveMessage(wx.PyEvent):
 
 
 # SERVER ----------------------------------------------------------------------------------------
-class SocketWorkerThread(Thread):
+class SocketWorkerThread(threading.Thread):
     """Worker Thread Class."""
     print("Server Started")
 
-    def __init__(self, notify_window):
+    def __init__(self, notify_window, queue_abort):
         """Init Worker Thread Class."""
-        Thread.__init__(self)
+        threading.Thread.__init__(self)
+        self._want_abort = None
+        self._queue_abort = queue_abort
         self._notify_window = notify_window
         self._msg = ""
-        # This starts the thread running on creation, but you could
-        # also make the GUI thread responsible for calling this
+        self.daemon = True
         self.start()
 
     def run(self):
         """Run Worker Thread."""
         receive_port = 3434
         send_port = 3434
-        threading.Thread(target=self.run_server, args=(PC_local_IP, receive_port)).start()
-        self._want_abort = None
+        t = threading.Thread(target=self.run_server, args=(PC_local_IP, receive_port))
+        t.daemon = True
+        t.start()
 
         while True:
             if self._msg:
@@ -213,6 +215,7 @@ class SocketWorkerThread(Thread):
                     self._msg = ""
                     break
             if self._want_abort:
+                print("Closed Server.")
                 break
 
     def abort(self):
@@ -221,13 +224,16 @@ class SocketWorkerThread(Thread):
         self._want_abort = 1
 
     def run_server(self, host, port):
-        """Handle all incoming connections by spawning worker threads."""
+        # Handle all incoming connections by spawning worker threads.
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind((host, port))
         print("Bind successful: " + host)
         server.listen(5)
+
         while True:
-            threading.Thread(target=self.handle_connection, args=server.accept()).start()
+            t = threading.Thread(target=self.handle_connection, args=server.accept())
+            t.daemon = True
+            t.start()
 
     def handle_connection(self, client, address):
         print("Client accepted from", address)
@@ -254,7 +260,6 @@ class StatusText(wx.Panel):
         # Status text
         self.status = wx.StaticText(self, label="", style=wx.BORDER_NONE)
         self.status.SetBackgroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
-        # status.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
 
         # Bind
         EVT_SENT_THROUGH_APP(self, self.change_status)  # Set event for receive message
@@ -272,37 +277,19 @@ class StatusText(wx.Panel):
         self.status_sizer.Layout()
 
 
-
-
 class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent):
         wx.ScrolledWindow.__init__(self, parent)
         self.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
         self.panel = self
-
-        # box = wx.StaticBox(self, label="", size=wx.Size(1000, 1000))
-        # self.sizer_log = wx.StaticBoxSizer(wx.VERTICAL, self)
         self.SetupScrolling(self, scrollToTop=False)
-        # self.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
 
         # Font Height
         self.font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
         self.dc = wx.ScreenDC()
         self.dc.SetFont(self.font)
         self.single_height = self.dc.GetMultiLineTextExtent('')
-        """
-        # Chat log - Names
-        self.chat_box_names = wx.StaticText(self, style=wx.TE_MULTILINE | wx.ST_NO_AUTORESIZE)
-        self.chat_box_names.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
-        self.chat_box_names.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
-        self.chat_box_names.SetFont(font)
 
-        # Chat log - Messages
-        self.chat_box_msg = wx.StaticText(self, style=wx.TE_MULTILINE | wx.ST_NO_AUTORESIZE)
-        self.chat_box_msg.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
-        self.chat_box_msg.SetForegroundColour(wx.Colour(255, 255, 255, wx.ALPHA_OPAQUE))
-        self.chat_box_msg.SetFont(font)
-        """
         # Sizer
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.main_sizer)
@@ -319,26 +306,6 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
         else:
             u = PC_Local_Name
         u += ': '
-        # msg_padded = msg.replace('\n', '\n' + 16 * ' ')
-        # msg = f'{u:<{10}}{msg_padded}'
-        """
-        chatHistory.append(msg)
-        chatHistory_Display = ''
-        for message in chatHistory:
-            chatHistory_Display += message + '\n'
-        self.chat_box_msg.SetLabel(chatHistory_Display)
-
-        chatHistory_names.append(u + " ")
-        chatHistory_Display_names = ''
-        for username in chatHistory_names:
-            chatHistory_Display_names += username + '\n'
-        self.chat_box_names.SetLabel(chatHistory_Display_names)
-
-        size = self.dc.GetMultiLineTextExtent(chatHistory_Display)
-        size.Height = size.Height - self.single_height.Height * 2
-        self.chat_box_msg.SetMinSize(size)
-        self.chat_box_names.SetMinSize(size)
-        """
         message_sizer = wx.BoxSizer()
 
         # Chat log - Names
@@ -351,8 +318,8 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
         message_sizer.Add(ui_name, 0, wx.EXPAND)
 
         # Chat log - Messages
-        ui_message = ExpandoTextCtrl(self, value=msg, style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_NO_VSCROLL
-                                                            | wx.BORDER_NONE | wx.TE_AUTO_URL | wx.TE_BESTWRAP)
+        style = wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_NO_VSCROLL | wx.BORDER_NONE | wx.TE_AUTO_URL | wx.TE_BESTWRAP
+        ui_message = ExpandoTextCtrl(self, value=msg, style=style)
         ui_message.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_OPAQUE))
         # Had to move foreground color to after it gets added to the panel so the color was right (otherwise was reset)
         ui_message.SetFont(self.font)
@@ -369,7 +336,7 @@ class LogPanel(wx.lib.scrolledpanel.ScrolledPanel):
         self.Scroll(0, 10000000)
         # self.Fit()
 
-    def OnRefit(self, evt):
+    def OnRefit(self):
         # The Expando control will redo the layout of the
         # sizer it belongs to, but sometimes this may not be
         # enough, so it will send us this event, so we can do any
@@ -400,7 +367,7 @@ class SendPanel(wx.Panel):
         box_send.Add(self.text_ctrl, 1, wx.EXPAND | wx.ALL, 5)
         self.SetSizer(box_send)
 
-    def send_message(self, event=None):
+    def send_message(self, event):
         msg = self.text_ctrl.GetValue()
         if msg:
             self.function.append_chat(msg)
@@ -413,7 +380,7 @@ class SendPanel(wx.Panel):
             self.text_ctrl.WriteText('\n')
             # print("Shift + Enter")
         elif unicodeKey == wx.WXK_RETURN:
-            self.send_message()
+            self.send_message(None)
             # print("Just Enter")
         else:
             event.Skip()
@@ -423,6 +390,9 @@ class SendPanel(wx.Panel):
 class MyFrame(wx.Frame):
     def __init__(self):
         super().__init__(parent=None, title=f'Chatting with {PC_Other_Name}', name='Local Instant Messenger')
+        self.temp_file = None
+        self.sha_github = None
+        self.queue_abort = queue.Queue()
         self.SetDoubleBuffered(True)
 
         # Remember window size and position
@@ -438,7 +408,6 @@ class MyFrame(wx.Frame):
         self.status_text = StatusText(main_panel)
         self.sub_panel_Log = LogPanel(main_panel)
         self.sub_panel_Send = SendPanel(main_panel)
-
         self.SetIcon(wx.Icon(icon))  # App icon
         # Set Update variable to false
         with open(pkl_update, 'wb') as f:
@@ -461,12 +430,9 @@ class MyFrame(wx.Frame):
         EVT_RECEIVE_MSG(self, self.ReceiveMsg)  # Set event for receive message
 
     def OnStart(self):
-        # Start Computation.
-        # Trigger the worker thread unless it's already busy
         global worker
         if not worker:
-            # self.status.SetLabel('Starting computation')
-            worker = SocketWorkerThread(self)
+            worker = SocketWorkerThread(self, self.queue_abort)
         self.CheckForUpdate()
 
     def ReceiveMsg(self, event):
@@ -507,21 +473,21 @@ class MyFrame(wx.Frame):
             update_script = os.path.join(tempfile.gettempdir(), py_update)
             subprocess.Popen([update_script,
                               self.temp_file,
-                              app_path, app_path,
+                              app_path, app_path,  # double vars intentional. One is current, other is new (same place).
                               pkl_sha, self.sha_github,
-                              pkl_update],
-                             start_new_session=True
+                              pkl_update]
                              )
-            sys.exit(0)
-
+            print("Closing main app.")
+        self.Destroy()
         event.Skip()
+        print("Skip")
 
     def CheckForUpdate(self):
         try:
             # Get GitHub sha value:
             url_sha = 'https://api.github.com/repos/LoganAC34/InstantMessaging/contents/Local_Instant_Messenger.exe'
             session = requests.Session()
-            sha_github = session.get(url_sha).json()
+            sha_github = session.get(url_sha, timeout=1).json()
             self.sha_github = sha_github['sha']
 
             # Get local file sha value:
@@ -543,8 +509,13 @@ class MyFrame(wx.Frame):
                 self.temp_file = os.path.join(tempfile.gettempdir(), os.path.basename(url_download))
                 print(self.temp_file)
 
+                # Set Update variable to True
+                with open(pkl_update, 'wb') as f:
+                    pickle.dump(True, f)
+
                 # Download file
-                t = Thread(target=self.DownloadUpdate, args=[url_download, self.temp_file])
+                t = threading.Thread(target=self.DownloadUpdate, args=[url_download, self.temp_file])
+                t.daemon = True
                 t.start()
 
             else:
@@ -561,7 +532,8 @@ class MyFrame(wx.Frame):
         update_popup = wx.adv.NotificationMessage(title='Downloading update...',
                                                   message="There is an update available. Please wait for it to finish "
                                                           "downloading before closing the program")
-        update_popup.SetIcon(wx.Icon(icon))
+        update_popup_icon = wx.Icon(icon)
+        update_popup.SetIcon(update_popup_icon)
         update_popup.Show()
 
         # Download current file
@@ -582,17 +554,20 @@ class MyFrame(wx.Frame):
                     pickle.dump(True, f)
 
                 # Notification about update
+                update_popup.Destroy()
                 update_popup = wx.adv.NotificationMessage(title='Download Complete!',
                                                           message="Close the program to use updated version.")
-                update_popup.SetIcon(wx.Icon(icon))
+                update_popup.SetIcon(update_popup_icon)
                 update_popup.Show()
                 print("Done.")
-
                 break
             except Exception as e:
                 print("Download failed. Trying again.")
                 print(e)
                 pass
+        update_popup.Close()
+        update_popup.Destroy()
+        update_popup_icon.Destroy()
 
     @staticmethod
     def UpdateNow(downloaded_path, current_path, new_path, pkl_sha, new_sha, pkl_update):
@@ -611,4 +586,6 @@ if __name__ == '__main__':
     frame.SetWindowStyle(wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP)
     frame.SetWindowStyle(wx.DEFAULT_FRAME_STYLE)
     app.MainLoop()
+    app.Destroy()
     del app
+    print("Closed main app.")

@@ -7,28 +7,41 @@ import time
 
 
 def run(downloaded_path, current_path, new_path, pkl_sha, new_sha, pkl_update):
-    time.sleep(3)  # Wait for main app to close
-
-    print("Remove: " + current_path)
-    os.remove(current_path)  # Delete old file
+    print("Overwrite: " + current_path)
     print("Move from: " + downloaded_path)
     print("Move to: " + new_path)
-    shutil.move(downloaded_path, new_path)  # Move new one from temp folder
-    subprocess.call('ie4uinit.exe -show', shell=True)  # Refresh icons
+    time.sleep(3)  # Give time for main program to finish closing
+    timer = 0
+    error = None
+    while True:
+        if timer < 10:  # After 10s of failing, cancel update.
+            try:
+                shutil.copy(downloaded_path, new_path)  # Move new one from temp folder
+                os.remove(downloaded_path)
+                subprocess.call('ie4uinit.exe -show', shell=True)  # Refresh icons
 
-    print("Pickle file: " + pkl_sha)
-    print("New sha:" + new_sha)
-    # Save current sha value:
-    with open(pkl_sha, 'wb') as f:
-        pickle.dump(new_sha, f)
+                print("Pickle file: " + pkl_sha)
+                print("New sha:" + new_sha)
+                # Save current sha value:
+                with open(pkl_sha, 'wb') as f:
+                    pickle.dump(new_sha, f)
 
-    # Set Update variable
-    with open(pkl_update, 'wb') as f:
-        pickle.dump(False, f)
+                # Set Update variable
+                with open(pkl_update, 'wb') as f:
+                    pickle.dump(False, f)
 
-    print("Run: " + new_path)
-    subprocess.Popen([new_path], start_new_session=True)
-    sys.exit(0)
+                print("Run: " + new_path)
+                subprocess.Popen([new_path], start_new_session=True)
+                time.sleep(3)  # Gives time to see CMD prompt when debugging.
+                break
+
+            except PermissionError as e:
+                error = e
+                time.sleep(0.1)
+                timer += 0.1
+        else:
+            raise error
+
 
 r"""
 if __name__ == '__main__':
@@ -51,3 +64,4 @@ pkl_sha = sys.argv[4]
 new_sha = sys.argv[5]
 pkl_update = sys.argv[6]
 run(downloaded_path, current_path, new_path, pkl_sha, new_sha, pkl_update)
+# sys.exit(0)

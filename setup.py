@@ -16,8 +16,8 @@ shutil.copytree(dir_path + '/Files/', dst)
 PyInstaller.__main__.run([
     dst + 'Update.py',
     '--distpath', dst,
-    '-F',
-    '--noconsole'
+    '--noconsole',
+    '-F'
 ])
 
 # Main script
