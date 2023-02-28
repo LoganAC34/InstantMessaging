@@ -7,30 +7,34 @@ import time
 from os.path import exists
 
 
-def user_ip(user, pkl_ip):
-    timeout = 0.3
+def user_ip(_user, pkl_ip):
+    _user = _user.upper()
     q = queue.Queue()
     startupinfo = subprocess.STARTUPINFO()
     startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-    def check_ip(user):
-        # Tests to see if user is in ip dictionary and if the IP associated with the username is still the current IP
+    def query_user(ip=""):
+        proc = subprocess.run(f'query user /server:{ip}', startupinfo=startupinfo, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE, shell=True, timeout=0.3)
+        output = str(proc.stdout.decode("UTF-8")).upper()
+        return output
+
+    def check_ip(_user):
+        # Tests to see if _user is in ip dictionary and if the IP associated with the username is still the current IP
         try:
             # Get IP dictionary
             with open(pkl_ip, 'rb') as f:
                 ip_dict = pickle.load(f)
-            user_ip = ip_dict[user]
+            _user_ip = ip_dict[_user]
 
-            proc = subprocess.run(f'query user /server:{user_ip}', startupinfo=startupinfo, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE, shell=True, timeout=timeout)
-
-            if user.upper() in str(proc.stdout.decode("UTF-8")).upper():
-                set_ip(user, user_ip)
-                return user_ip
-        except:
+            if _user in query_user(_user_ip):
+                set_ip(_user, _user_ip)
+                return _user_ip
+        except Exception as e:
+            print(e)
             return False
 
-    def set_ip(user, ip):
+    def set_ip(_user, ip):
         if exists(pkl_ip):
             # Get IP dictionary
             with open(pkl_ip, 'rb') as f:
@@ -38,88 +42,40 @@ def user_ip(user, pkl_ip):
         else:
             ip_dict = {}
 
-        ip_dict[user] = ip
+        ip_dict[_user] = ip
 
         # Set IP dictionary
         with open(pkl_ip, 'wb') as f:
             pickle.dump(ip_dict, f)
 
-    """
-    def getips():
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        ipadressen = {}
-
-        def ping(ipadresse, q):
-            try:
-                # sends only one package, faster
-                outputcap = subprocess.run([f'ping', ipadresse, '-n', '1'], capture_output=True,
-                                           startupinfo=startupinfo, timeout=0.001)
-                ipadressen[ipadresse] = outputcap
-                q.put(ipadressen)
-            except Exception as e:
-                print(e)
-
-        # prepares threads
-        q = queue.Queue()
-        threads = []
-        for ipend in range(255):
-            t = threading.Thread(target=ping, args=(f'192.168.16.{ipend}', q))
-            threads.append(t)
-            t.start()
-
-        # Wait for all of them to finish
-        for x in threads:
-            x.join()
-        ipadressen = q.get(block=False)
-
-        alldevices = []
-        for key, item in ipadressen.items():
-            # checks if there wasn't neither general failure nor 'unreachable host'
-            if 'unreachable' not in item.stdout.decode('utf-8') and 'failure' not in item.stdout.decode('utf-8'):
-                alldevices.append(key)
-        alldevices.sort()
-        return alldevices
-    """
-
     def worker(ip):
         try:
-            proc = subprocess.run(f'query user /server:{ip}', startupinfo=startupinfo, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE, shell=True, timeout=timeout)
-
-            if user.upper() in str(proc.stdout.decode("UTF-8")).upper():
+            if _user in query_user(ip):
                 q.put(ip)
-        except:
+        except Exception as e:
+            print(e)
             pass
 
-    def after_timeout():
-        # print("KILL MAIN THREAD: %s" % threading.current_thread().ident)
-        raise SystemExit
-
     def search_user(all_ips):
-        # Search for user in discovered IPs
+        # Search for _user in discovered IPs
         n = 1
         results = ''
-        print(f'Searching IPs for user "{user}"')
+        print(f'Searching IPs for user "{_user}"')
         for ip in all_ips:
             start = time.time()
-            #print(f"Starting thread ip:{ip}")
             try:
-                results = q.get(block=False, timeout=timeout)
+                results = q.get(block=False, timeout=0.1)
                 break
-            except:
+            except queue.Empty:
                 t = threading.Thread(target=worker, args=[ip], daemon=True)
                 t.start()
                 time.sleep(0.1)
-                #threading.Timer(timeout, after_timeout).start()
                 n += 1
             lap = time.time() - start
             print(f'{ip} took {lap}')
-            if lap > 0.3:
-                print(f'{ip} took {lap}')
         return results
 
-    def main(user):
+    def main(_user):
         """
         Testing allIPs = ['192.168.16.1', '192.168.16.5', '192.168.16.19', '192.168.16.6', '192.168.16.3',
         '192.168.16.29', '192.168.16.27', '192.168.16.24', '192.168.16.32', '192.168.16.38', '192.168.16.35',
@@ -135,27 +91,24 @@ def user_ip(user, pkl_ip):
         '192.168.16.61', '192.168.16.96', '192.168.16.69', '192.168.16.54', '192.168.16.73', '192.168.16.82',
         '192.168.16.118']
         """
-        user_ip = check_ip(user)
-        if user_ip:
-            return user_ip
+        _user_ip = check_ip(_user)
+        if _user_ip:
+            return _user_ip
         else:
-            # Test to see if queried user is current PC
-            proc = subprocess.run(f'query user', stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                  shell=True, startupinfo=startupinfo)
-            if user.upper() in str(proc.stdout.decode("UTF-8")).upper():
+            if _user in query_user():  # Test to see if queried _user is current PC
                 out = socket.gethostbyname(socket.gethostname())
-            else:  # If not, search IPs on network for user
-                allIPs = []
-                for ipend in range(255):
-                    allIPs.append(f'192.168.16.{ipend}')
-                print(allIPs)
+            else:  # If not, search IPs on network for _user
+                all_ips = []
+                for ip_end in range(255):
+                    all_ips.append(f'192.168.16.{ip_end}')
+                print(all_ips)
 
-                out = search_user(allIPs)
+                out = search_user(all_ips)
                 if type(out) is list:
                     out = out[0]
                 print(out)
 
-        set_ip(user, out)
+        set_ip(_user, out)
         return out
 
-    return main(user)
+    return main(_user)

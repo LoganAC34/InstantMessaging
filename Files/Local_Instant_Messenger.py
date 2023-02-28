@@ -1,3 +1,4 @@
+import configparser
 import os
 import pathlib
 import pickle
@@ -51,6 +52,35 @@ pkl_sha = my_data_dir / 'sha.pkl'
 pkl_update = my_data_dir / 'update.pkl'
 plk_IP = my_data_dir / 'ip.pkl'
 
+# Config file
+cfgFile_path = os.path.join(my_data_dir, 'config.cfg')
+header_users = 'USERS'
+header_debug = 'DEBUG'
+cfg_user_1_username_variable = 'User_1_username'
+cfg_user_2_username_variable = 'User_2_username'
+cfg_user_1_pc_variable = 'User_1_pc'
+cfg_user_2_pc_variable = 'User_2_pc'
+cfg_user_1_name_variable = 'User_1_name'
+cfg_user_2_name_variable = 'User_2_name'
+
+# Create config file if one doesn't exist
+if not os.path.exists(cfgFile_path):
+    config_temp = configparser.ConfigParser()
+    config_temp[header_users] = {}
+    config_temp[header_users][cfg_user_1_username_variable] = ""
+    config_temp[header_users][cfg_user_2_username_variable] = ""
+    config_temp[header_users][cfg_user_1_pc_variable] = ""
+    config_temp[header_users][cfg_user_2_pc_variable] = ""
+    config_temp[header_debug] = {}
+    config_temp[header_debug][cfg_user_1_username_variable] = ""
+    config_temp[header_debug][cfg_user_2_username_variable] = ""
+    with open(cfgFile_path, 'x') as configfile:
+        config_temp.write(configfile)
+
+# Get Config values
+config = configparser.ConfigParser()
+config.read(cfgFile_path)
+
 # User IPs
 debug = False
 splash_screen_toggle = False
@@ -59,24 +89,38 @@ if splash_screen_toggle:
     splash_screen = threading.Thread(target=SplashScreen.main, args=(q, None))
     splash_screen.daemon = True
     splash_screen.start()
+
 if debug:
-    user_1 = socket.gethostbyname('CADD-13')
-    user_2 = socket.gethostbyname('CADD-7')
+    cfg_user_1 = config[header_debug][cfg_user_1_username_variable]
+    cfg_user_2 = config[header_debug][cfg_user_2_username_variable]
+    user_1 = socket.gethostbyname(cfg_user_1)
+    user_2 = socket.gethostbyname(cfg_user_2)
 else:
-    user_1 = GetIP.user_ip('lcarrozza', plk_IP)
-    user_2 = GetIP.user_ip('truby', plk_IP)
+    search = False
+    if search:
+        cfg_user_1 = config[header_users][cfg_user_1_username_variable]
+        cfg_user_2 = config[header_users][cfg_user_2_username_variable]
+        user_1 = GetIP.user_ip(cfg_user_1, plk_IP)
+        user_2 = GetIP.user_ip(cfg_user_2, plk_IP)
+    else:
+        cfg_user_1 = config[header_users][cfg_user_1_pc_variable]
+        cfg_user_2 = config[header_users][cfg_user_2_pc_variable]
+        user_1 = socket.gethostbyname(cfg_user_1)
+        user_2 = socket.gethostbyname(cfg_user_2)
+
+
 
 # PC IP and names
-cur_IP = socket.gethostbyname(socket.gethostname())
-
-PC_local_IP = cur_IP
-if cur_IP == user_1:
-    PC_Local_Name = 'Logan'
-    PC_Other_Name = 'Tyler'
+PC_local_IP = socket.gethostbyname(socket.gethostname())
+cfg_user_1_name = config[header_users][cfg_user_1_name_variable]
+cfg_user_2_name = config[header_users][cfg_user_2_name_variable]
+if PC_local_IP == user_1:
+    PC_Local_Name = cfg_user_1_name
+    PC_Other_Name = cfg_user_2_name
     PC_Other_IP = user_2
 else:
-    PC_Local_Name = 'Tyler'
-    PC_Other_Name = 'Logan'
+    PC_Local_Name = cfg_user_2_name
+    PC_Other_Name = cfg_user_1_name
     PC_Other_IP = user_1
 
 if splash_screen_toggle:
