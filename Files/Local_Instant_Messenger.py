@@ -28,6 +28,7 @@ class MyFrame(ChatWindow):
         self.SettingsWindow = None
         self.SetDoubleBuffered(True)
         self.SetIcon(wx.Icon(GlobalVars.icon))
+        self.UserNameWidth = 50
 
         # Remember window size and position
         self._persistMgr = wx.lib.agw.persist.PersistenceManager.Get()
@@ -162,18 +163,22 @@ class MyFrame(ChatWindow):
         # print("Event handler 'UpdateStatus' not implemented!")
 
     def AppendMessage(self, username, message):
-        # noinspection PyUnresolvedReferences
-        font = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.NORMAL)
-        height = font.GetPixelSize().Height * 1.5
         sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer_1.Add(sizer, flag=wx.TOP | wx.EXPAND)
 
         text_ctrl_username = wx.TextCtrl(self.panel_chat_log, wx.ID_ANY, f"{username}: ",
-                                         style=wx.BORDER_NONE | wx.TE_READONLY | wx.TE_RIGHT)
-        text_ctrl_username.SetMinSize((50, height))
+                                         style=wx.BORDER_NONE | wx.TE_READONLY | wx.TE_LEFT)
 
-        sizer.Add(text_ctrl_username, 0, wx.RIGHT, 3)
+        # Get text height and width
+        font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False)
+        height = font.GetPixelSize().Height * 1.5
         text_ctrl_username.SetFont(font)
+        width = text_ctrl_username.GetTextExtent(username).Width + 10
+        if width > self.UserNameWidth:
+            self.UserNameWidth = width
+
+        text_ctrl_username.SetMinSize((self.UserNameWidth, height))
+        sizer.Add(text_ctrl_username, 0, wx.LEFT, 3)
         text_ctrl_username.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
         text_ctrl_username.SetForegroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
 

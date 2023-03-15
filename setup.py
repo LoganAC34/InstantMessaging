@@ -32,7 +32,7 @@ PyInstaller.__main__.run([
     # '--debug=imports',
     '--add-data', rf'.\Files\{icon};.',
     '--add-data', dst + 'Update.exe;.',
-    '--add-data', r'.\Files\GetIP.py;.'
+    '--add-data', r'.\Files\Server.py;.'
 ])
 
 shutil.rmtree(dst)
