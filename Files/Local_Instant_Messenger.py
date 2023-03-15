@@ -85,6 +85,9 @@ class MyFrame(ChatWindow):
         self.SettingsWindow.MakeModal(True)
         event.Skip()
 
+    def ClearChat(self, event):
+        self.sizer_1.Clear(True)
+
     def SendMessage(self, event):
         message = self.text_ctrl_message.GetValue()
         if message:
