@@ -1,5 +1,0 @@
-Spell check
-Better text log format
-    Images
-    Dont double up on sender names. If the message being added is from the same sender as the previous, just add the message.
-    When typing, give status on connection, and/or periodically.
