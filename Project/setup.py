@@ -35,8 +35,8 @@ PyInstaller.__main__.run([
     '--icon', os.path.join(dir_path, 'Local_Instant_Messenger.ico'),
     '--hidden-import', 'wx.adv',
     '--hidden-import', 'wx.xml',
-    '--debug=imports',
-    '--add-data', rf'{dir_path};.'
+    # '--debug=imports',
+    '--add-data', rf'{dst};.'
 ])
 
 shutil.rmtree(dst)

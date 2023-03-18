@@ -21,11 +21,13 @@ class GlobalVars(object):
     # Get exe location
     if getattr(sys, 'frozen', False):
         # we are running in a bundle
+        print('Frozen')
         # noinspection PyProtectedMember
         exe = sys._MEIPASS + '\\'
         app_path = sys.executable
     else:
         # we are running in a normal Python environment
+        print('Not frozen')
         exe = os.path.abspath('../../') + '\\'
         app_path = os.path.abspath('../../Testing/Local_Instant_Messenger.exe')
 

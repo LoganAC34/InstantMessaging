@@ -8,13 +8,13 @@ import wx.richtext
 from Project.bin.Scripts import Config
 from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.wxglade.SettingsWindow import *
-from Project.bin.wxglade_overrides import ChatWindowOverride
+from Project.bin.wxglade_overrides import ChatWindow
 
 
 class FrameSettings(SettingsWindow):
     def __init__(self, *args, **kwds):
         SettingsWindow.__init__(self, *args, **kwds)
-        self.server = ChatWindowOverride.server
+        self.server = ChatWindow.server
         self._disabler = None
         self.SetIcon(wx.Icon(GlobalVars.icon))
 

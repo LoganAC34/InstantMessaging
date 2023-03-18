@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-from wxglade_overrides.ChatWindowOverride import *
-from wxglade_overrides.FrameSettingsOverride import *
+from wxglade_overrides.ChatWindow import *
+from wxglade_overrides.FrameSettings import *
 
 
 class MyApp(wx.App):

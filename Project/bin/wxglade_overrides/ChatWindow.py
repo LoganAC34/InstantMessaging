@@ -21,7 +21,7 @@ from Project.bin.Scripts import Config
 from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.Scripts.Server import SocketWorkerThread
 from Project.bin.wxglade.ChatWindow import *
-from Project.bin.wxglade_overrides import FrameSettingsOverride
+from Project.bin.wxglade_overrides import FrameSettings
 
 drop_event, EVT_DROP_EVENT = wx.lib.newevent.NewEvent()
 
@@ -124,7 +124,7 @@ class MyFrame(ChatWindow):
                 server.update_variables()
 
     def OpenSettings(self, event):  # wxGlade: FrameMain.<event_handler>
-        self.SettingsWindow = FrameSettingsOverride.FrameSettings(self)
+        self.SettingsWindow = FrameSettings.FrameSettings(self)
         self.SettingsWindow.CentreOnParent()
         self.SettingsWindow.Show()
         self.SettingsWindow.MakeModal(True)
@@ -190,7 +190,7 @@ class MyFrame(ChatWindow):
             print("Update available")
             # Copy Update script to temp folder
             py_update = 'Update.exe'
-            src_script_path = os.path.join(GlobalVars.exe, r'\Scripts', py_update)
+            src_script_path = os.path.join(GlobalVars.exe, 'Scripts', py_update)
             dst_script_path = os.path.join(tempfile.gettempdir(), py_update)
             print("Source: " + src_script_path)
             print("Paste: " + dst_script_path)
