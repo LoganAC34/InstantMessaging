@@ -136,6 +136,7 @@ class MyFrame(ChatWindow):
 
     def SendMessage(self, event):
         message = self.text_ctrl_message.GetValue()
+        self.UpdateStatus('characters', 0)
         if message:
             PC_Local_Name = Config.get_user_info('alias', 'local')
             self.AppendMessage(PC_Local_Name, message)

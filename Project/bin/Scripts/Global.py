@@ -28,7 +28,7 @@ class GlobalVars(object):
     else:
         # we are running in a normal Python environment
         print('Not frozen')
-        exe = os.path.abspath('../../') + '\\'
+        exe = os.path.abspath('./') + '\\'
         app_path = os.path.abspath('../../Testing/Local_Instant_Messenger.exe')
 
     # Home directory
