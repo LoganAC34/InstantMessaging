@@ -67,14 +67,7 @@ class MyFrame(ChatWindow):
         if not os.path.exists(GlobalVars.cfgFile_path):
             Config.create_template()
 
-        """
         # Server
-        self.queue_to_server = queue.Queue()
-        self.queue_from_server = queue.Queue()
-        # noinspection PyGlobalUndefined
-        global server
-        server = SocketWorkerThread(self.queue_to_server, self.queue_from_server)
-        """
         self.queue_from_server = GlobalVars.queue_from_server
         server.start_server()
         self.timer = wx.Timer(self)
@@ -141,7 +134,7 @@ class MyFrame(ChatWindow):
             PC_Local_Name = Config.get_user_info('alias', 'local')
             self.AppendMessage(PC_Local_Name, message)
             server.send_message(PC_Local_Name, message)
-            self.text_ctrl_message.Clear()
+            self.text_ctrl_message.ClearAll()
 
     @staticmethod
     def CheckConnection():

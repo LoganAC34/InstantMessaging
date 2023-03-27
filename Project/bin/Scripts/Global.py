@@ -45,8 +45,8 @@ class GlobalVars(object):
     icon = exe + 'Local_Instant_Messenger.ico'
     debug = False
 
-    # Config file -------------------------------------------------
-    cfgFile_path = os.path.join(my_data_dir, 'config.cfg')
+    cfgFile_path = os.path.join(my_data_dir, 'config.cfg')  # Config file
+    pwl_path = os.path.join(my_data_dir, 'user_dictionary.txt')  # Personal dictionary
 
     # Server
     queue_to_server = queue.Queue()
