@@ -1,8 +1,7 @@
-import re
-
 import enchant
 import wx
 import wx.stc as stc
+from enchant.checker import SpellChecker
 
 from Project.bin.Scripts.Global import GlobalVars
 
@@ -10,6 +9,12 @@ from Project.bin.Scripts.Global import GlobalVars
 class SpellCheckTextCtrl(stc.StyledTextCtrl):
     def __init__(self, parent, _id, value, style):
         stc.StyledTextCtrl.__init__(self, parent, id=_id, style=style)
+        self.value = value  # Dummy variable to appease main script
+
+        # Current word
+        self.currentWord = None
+        self.currentWord_start = 0
+        self.currentWord_end = 0
 
         # Set textctrl appearance
         self.SetUseHorizontalScrollBar(False)  # Enable horizontal scroll
@@ -33,82 +38,64 @@ class SpellCheckTextCtrl(stc.StyledTextCtrl):
         self.Bind(wx.EVT_LEFT_UP, self.OnKeyUp)
         self.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
 
-    def OnKeyUp(self, event):
+    def OnKeyUp(self, event, replace=False):
+        # print("Checking Spelling")
+        if not replace:
+            event.Skip()
         # Get the text from the text box
-        text = self.GetValue()
+        text = self.GetValue()  # Get text
+        curr = self.GetCurrentPos()  # Get the word under the cursor
 
-        # Get the current position of the cursor
-        curr = self.GetCurrentPos()
+        # Clear any previous style on the text
+        self.IndicatorClearRange(0, len(text))
 
-        # Get the word under the cursor
-        current_word_start = self.WordStartPosition(curr, True)
-        current_word_end = self.WordEndPosition(curr, True)
-        current_word = self.GetTextRange(current_word_start, current_word_end)
+        # Reset current word parameters
+        self.currentWord = None
+        self.currentWord_start = 0
+        self.currentWord_end = 0
 
-        # Split the text into words and check their spelling
-        words = re.split(r'(\W+)', text)[:-1]
-        for i, word in enumerate(words):
-            if word != '' and word is not None and word.isalpha():
-                pos = len(''.join(words[:i])) + 1  # calculate position of misspelled word
-                word_start = self.WordStartPosition(pos, True)
-
-                if word != current_word and not self.dict.check(word):
-                    # If the word is misspelled, underline it in the text box
-                    self.SetIndicatorCurrent(0)
-                    self.IndicatorFillRange(word_start, len(word))
-                else:
-                    # Clear any previous style on the word
-                    self.IndicatorClearRange(word_start, len(word))
-
-        event.Skip()
+        # If the word is misspelled, underline it in the text box
+        checker = SpellChecker(self.dict, text)
+        for word in checker:
+            word_text = word.word
+            word_start = word.wordpos
+            word_end = word_start + len(word_text)
+            if not (word_start <= curr <= word_end):
+                # print(f"Misspelled word: {word.word}")
+                self.SetIndicatorCurrent(0)
+                self.IndicatorFillRange(word_start, len(word_text))
+            else:
+                self.currentWord = word_text
+                self.currentWord_start = word_start
+                self.currentWord_end = word_end
+        if not replace:
+            wx.CallAfter(event.Skip)
 
     def OnRightUp(self, event):
-        # Get the current position of the cursor
-        pos = self.GetCurrentPos()
+        self.OnKeyUp(event, True)
+        if self.currentWord:
+            menu = wx.Menu()
 
-        # Get the word under the cursor
-        word_start = self.WordStartPosition(pos, True)
-        word_end = self.WordEndPosition(pos, True)
-        word = self.GetTextRange(word_start, word_end)
+            # Get the fist 5 suggested replacement words
+            suggestions = self.dict.suggest(self.currentWord)[:5]
 
-        # Show the context menu only if the word is misspelled
-        if word != '' and word is not None and word.isalpha():
-            if not self.dict.check(word):
-                menu = wx.Menu()
+            for x, suggestion in enumerate(suggestions):
+                item = menu.Append(x, suggestion)
+                self.Bind(wx.EVT_MENU, self.OnSuggestionSelected, item)
 
-                # Get the suggested replacement words
-                suggestions = self.dict.suggest(word)[:5]
+            # Add an option to add the misspelled word to the dictionary
+            menu.AppendSeparator()
+            item_add = menu.Append(wx.ID_ANY, f'Add \"{self.currentWord}\" to dictionary')
+            self.Bind(wx.EVT_MENU, self.OnAddToDictionary, item_add)
 
-                for x, suggestion in enumerate(suggestions):
-                    item = menu.Append(x, suggestion)
-                    self.Bind(wx.EVT_MENU, self.OnSuggestionSelected, item)
-
-                # Add an option to add the misspelled word to the dictionary
-                menu.AppendSeparator()
-                item_add = menu.Append(wx.ID_ANY, f'Add \"{word}\" to dictionary')
-                self.Bind(wx.EVT_MENU, self.OnAddToDictionary, item_add)
-
-                self.PopupMenu(menu)
-            else:
-                event.Skip()
+            self.PopupMenu(menu)
         else:
             event.Skip()
 
     def OnAddToDictionary(self, event):
-        # Get the current position of the cursor
-        pos = self.GetCurrentPos()
-
-        # Get the word under the cursor
-        word_start = self.WordStartPosition(pos, True)
-        word_end = self.WordEndPosition(pos, True)
-        word = self.GetTextRange(word_start, word_end)
-
-        # Add the word to the dictionary
-        self.dict.add(word)
-
-        # Clear any previous style on the word
-        self.IndicatorClearRange(word_start, len(word))
-
+        # Add the word to the dictionary and clear any previous style on the word
+        self.dict.add(self.currentWord)
+        self.IndicatorClearRange(self.currentWord_start, len(self.currentWord))
         event.Skip()
 
     def OnSuggestionSelected(self, event):
@@ -116,9 +103,6 @@ class SpellCheckTextCtrl(stc.StyledTextCtrl):
         suggestion = event.GetEventObject().GetLabel(event.Id)
 
         # Replace the misspelled word with the suggestion
-        pos = self.GetCurrentPos()
-        word_start = self.WordStartPosition(pos, True)
-        word_end = self.WordEndPosition(pos, True)
-        self.SetTargetStart(word_start)
-        self.SetTargetEnd(word_end)
+        self.SetTargetStart(self.currentWord_start)
+        self.SetTargetEnd(self.currentWord_end)
         self.ReplaceTarget(suggestion)

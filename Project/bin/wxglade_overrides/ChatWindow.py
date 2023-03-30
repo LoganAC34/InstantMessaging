@@ -67,12 +67,19 @@ class MyFrame(ChatWindow):
         if not os.path.exists(GlobalVars.cfgFile_path):
             Config.create_template()
 
-        # Server
+        # Server - Check for messages
         self.queue_from_server = GlobalVars.queue_from_server
         server.start_server()
-        self.timer = wx.Timer(self)
-        self.timer.Start(100)
-        self.Bind(wx.EVT_TIMER, self.HandleServer, self.timer)
+        self.timer_messages = wx.Timer(self)
+        self.timer_messages.Start(100)
+        self.Bind(wx.EVT_TIMER, self.HandleServer, self.timer_messages)
+
+        # Server - Check connection
+        self.CheckConnection(self)  # Check connection at init
+        self.timer_connection = wx.Timer(self)
+        self.timer_connection_end = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.CheckConnection, self.timer_connection)
+        self.Bind(wx.EVT_TIMER, self.CheckConnection_Stop, self.timer_connection_end)
 
         # Variables
         self.temp_file = None
@@ -116,7 +123,7 @@ class MyFrame(ChatWindow):
             elif function == 'update_variables':
                 server.update_variables()
 
-    def OpenSettings(self, event):  # wxGlade: FrameMain.<event_handler>
+    def OpenSettings(self, event):
         self.SettingsWindow = FrameSettings.FrameSettings(self)
         self.SettingsWindow.CentreOnParent()
         self.SettingsWindow.Show()
@@ -137,10 +144,15 @@ class MyFrame(ChatWindow):
             self.text_ctrl_message.ClearAll()
 
     @staticmethod
-    def CheckConnection():
+    def CheckConnection(self):
         server.test_connection()
 
-    def OnKey_Press(self, event):  # wxGlade: FrameMain.<event_handler>
+    def CheckConnection_Stop(self, event):
+        print("Stopped checking server connection.")
+        self.timer_connection.Stop()
+        self.timer_connection_end.Stop()
+
+    def OnKey_Press(self, event):
         # print('Onkey')
         unicodeKey = event.GetUnicodeKey()
         message = self.text_ctrl_message.GetValue()
@@ -154,8 +166,10 @@ class MyFrame(ChatWindow):
             # print("Just Enter") # Prevents sending blank message when hitting enter twice.
             pass
         else:
-            self.CheckConnection()
             event.Skip()
+        if not self.timer_connection.IsRunning():
+            self.timer_connection.Start(1000)
+        self.timer_connection_end.Start(10000)
 
     def OnKey_Release(self, event):
         message = self.text_ctrl_message.GetValue()
@@ -167,7 +181,7 @@ class MyFrame(ChatWindow):
         self.panel_chat_log.Scroll(0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))
         event.Skip()
 
-    def OnClose(self, event):  # wxGlade: FrameMain.<event_handler>
+    def OnClose(self, event):
         # self.queue_to_server.put("Command:Shutdown")
         # print("Event handler 'OnClose' not implemented!")
         self._persistMgr.SaveAndUnregister()
@@ -212,7 +226,7 @@ class MyFrame(ChatWindow):
 
         event.Skip()
 
-    def OnOpen(self, event):  # wxGlade: FrameMain.<event_handler>
+    def OnOpen(self, event):
         self.CheckForUpdate()
         event.Skip()
 
