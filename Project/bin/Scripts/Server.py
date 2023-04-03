@@ -31,10 +31,10 @@ class SocketWorkerThread(threading.Thread):
         self.cipher_key = Fernet(key)
 
         # Start server
+        self.out_data = None
+        self.in_data = None
         self.queue_from_app = queue_from_app
         self.queue_to_app = queue_to_app
-        self._msg = ""
-        self._user = ""
         self.daemon = True
 
     def start_server(self):
@@ -51,40 +51,45 @@ class SocketWorkerThread(threading.Thread):
 
         while True:
             time.sleep(0.01)
-            if self._user and self._msg:
-                data = {'user': self._user, 'message': self._msg}
-                data = json.dumps(data)
-                encrypted_msg = self.cipher_key.encrypt(data.encode())  # Encrypt message
+            if self.out_data:
+                # data = {'user': self._user, 'message': self._msg}
+                # {'function': 'message', 'args': {'user': user, 'message': msg}}
+                function = self.out_data['function']
+                encrypted_msg = self.cipher_key.encrypt(json.dumps(self.out_data).encode())  # Encrypt message
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+                if function == 'message':
+                    print("Sending message to " + self.remote_host + ":" + str(send_port))
+                    print(self.out_data['args']['message'])
+                elif function == 'status':
+                    print("Testing connection to " + self.remote_host + ":" + str(send_port))
+                elif function == 'typing':
+                    print("Telling " + self.remote_host + ":" + str(send_port) + " You're typing.")
+
                 try:
-                    if self._user != self.local_name_conn_test:
-                        print("Sending message to " + self.remote_host + ":" + str(send_port))
-                    else:
-                        print("Testing connection to " + self.remote_host + ":" + str(send_port))
                     client.settimeout(0.1)
                     client.connect((self.remote_host, send_port))
                     client.send(encrypted_msg)
-                    print(self._msg)
                     via = 'app'
 
                 except TimeoutError:
-                    batchMessage = f'{self._user}: {self._msg}'
-                    batchMessage = batchMessage.replace('\n', ' ')
-                    if self._user != self.local_name_conn_test:
-                        subprocess.call(f'msg /SERVER:{self.remote_host} * /TIME:60 "{batchMessage}"', shell=True)
                     via = 'Windows popup'
+                    if function == 'message':
+                        args = self.out_data['args']
+                        user = args['user']
+                        msg = args['message']
+                        batchMessage = f'{user}: {msg}'
+                        batchMessage = batchMessage.replace('\n', ' ')
+                        subprocess.call(f'msg /SERVER:{self.remote_host} * /TIME:60 "{batchMessage}"', shell=True)
 
                 # Status
-                if self._user == self.local_name_conn_test:
-                    action = 'Will send'
-                else:
+                action = 'Will send'
+                if function == 'message':
                     action = 'Sent'
                 out = {'function': 'status', 'args': f"{action} to {self.remote_host} via {via}."}
                 self.queue_to_app.put(out)
 
-            self._msg = None
-            self._user = None
+            self.out_data = None
 
     def run_server(self, host, port):
         # Handle all incoming connections by spawning worker threads.
@@ -94,7 +99,7 @@ class SocketWorkerThread(threading.Thread):
         server.listen(5)
 
         while True:
-            time.sleep(0.01)
+            time.sleep(0.001)
             t = threading.Thread(target=self.handle_connection, args=server.accept())
             t.daemon = True
             t.start()
@@ -106,29 +111,33 @@ class SocketWorkerThread(threading.Thread):
         msg = client.recv(1024).decode("UTF-8")
         decrypted_msg = self.cipher_key.decrypt(msg).decode("UTF-8")  # Decrypt message
         # print(decrypted_msg)
-
         data = json.loads(decrypted_msg)
-        if self.remote_override:
-            user = self.remote_name
-        else:
-            user = data['user']
-        message = data['message']
 
-        if user != self.local_name_conn_test:
-            out = {'function': 'message', 'args': {'user': user, 'message': message}}
-            self.queue_to_app.put(out)
+        function = data['function']
+        args = data['args']
+        if function == 'message':
+            if self.remote_override:
+                data['args']['user'] = self.remote_name
+            print(data)
+        elif function == 'status':
+            return
+
+        self.queue_to_app.put(data)
 
     def send_message(self, user, msg):
-        self._msg = msg
-        self._user = user
+        self.out_data = {'function': 'message', 'args': {'user': user, 'message': msg}}
         # print("Event triggered")
-        # print(self._msg)
+        # print(self.out_data)
 
-    def test_connection(self):
-        self._msg = ' '
-        self._user = self.local_name_conn_test
+    def connection_status(self, user=None):
+        self.out_data = {'function': 'status', 'args': user}
         # print("Event triggered")
-        # print(self._msg)
+        # print(self.out_data)
+
+    def typing(self, user):
+        self.out_data = {'function': 'typing', 'args': user}
+        # print("Event triggered")
+        # print(self.out_data)
 
     def update_variables(self):
         self.remote_host = Config.get_user_info('device_name', 'remote')

@@ -78,8 +78,10 @@ class MyFrame(ChatWindow):
         self.CheckConnection(self)  # Check connection at init
         self.timer_connection = wx.Timer(self)
         self.timer_connection_end = wx.Timer(self)
+        self.timer_typing = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.CheckConnection, self.timer_connection)
         self.Bind(wx.EVT_TIMER, self.CheckConnection_Stop, self.timer_connection_end)
+        self.Bind(wx.EVT_TIMER, self.ClearTyping, self.timer_typing)
 
         # Variables
         self.temp_file = None
@@ -96,17 +98,20 @@ class MyFrame(ChatWindow):
         image = wx.Image(image_path, wx.BITMAP_TYPE_ANY)
         self.text_ctrl_message.AddImage(image)
 
+    def ClearTyping(self, event):
+        self.TypingUser.SetLabel('')
+
     # noinspection PyUnusedLocal
     def HandleServer(self, event):
-        result = {}
+        data = {}
         try:
-            result = self.queue_from_server.get(False)
+            data = self.queue_from_server.get(False)
         except queue.Empty:
             pass
 
-        if result:
-            function = result['function']
-            args = result['args']
+        if data:
+            function = data['function']
+            args = data['args']
             if function == 'message':
                 username = args['user']
                 message = args['message']
@@ -122,6 +127,10 @@ class MyFrame(ChatWindow):
                 self.UpdateStatus('sent to', status)
             elif function == 'update_variables':
                 server.update_variables()
+            elif function == 'typing':
+                user = args
+                self.TypingUser.SetLabel(f'{user} is typing...')
+                self.timer_typing.Start(1000, oneShot=True)
 
     def OpenSettings(self, event):
         self.SettingsWindow = FrameSettings.FrameSettings(self)
@@ -133,6 +142,8 @@ class MyFrame(ChatWindow):
     def ClearChat(self, event):
         self.sizer_1.Clear(True)
         self.ClearedChat = True
+        self.panel_chat_log.Scroll(0, 0)
+        self.panel_chat_log.FitInside()
 
     def SendMessage(self, event):
         message = self.text_ctrl_message.GetValue()
@@ -142,10 +153,11 @@ class MyFrame(ChatWindow):
             self.AppendMessage(PC_Local_Name, message)
             server.send_message(PC_Local_Name, message)
             self.text_ctrl_message.ClearAll()
+            wx.CallAfter(self.CheckConnection_Stop, event)
 
     @staticmethod
     def CheckConnection(self):
-        server.test_connection()
+        server.connection_status(Config.get_user_info('alias', 'local'))
 
     def CheckConnection_Stop(self, event):
         print("Stopped checking server connection.")
@@ -161,11 +173,12 @@ class MyFrame(ChatWindow):
             self.text_ctrl_message.WriteText('\n')
         elif unicodeKey == wx.WXK_RETURN and message:
             # print("Just Enter with message")
-            self.SendMessage(self)
+            self.SendMessage(event)
         elif unicodeKey == wx.WXK_RETURN:
             # print("Just Enter") # Prevents sending blank message when hitting enter twice.
             pass
         else:
+            server.typing(Config.get_user_info('alias', 'local'))
             event.Skip()
         if not self.timer_connection.IsRunning():
             self.timer_connection.Start(1000)
@@ -239,6 +252,23 @@ class MyFrame(ChatWindow):
         self.MainFrame_statusbar.SetStatusText(status, 0)
         # print("Event handler 'UpdateStatus' not implemented!")
 
+    def MouseEvents(self, event):
+        # print("Event handler 'MouseEvents' not implemented!")
+        wheel_direction = event.GetWheelRotation()
+        scroll_pos = self.panel_chat_log.GetScrollPos(wx.VERTICAL)
+        scroll_rate = 15
+        if wheel_direction > 0:
+            if scroll_pos < scroll_rate:
+                # print("Scroll top")
+                scroll_pos = 0
+            else:
+                # print("Scroll up")
+                scroll_pos -= scroll_rate
+        else:
+            # print("Scroll down")
+            scroll_pos += scroll_rate
+        self.panel_chat_log.Scroll(0, scroll_pos)
+
     def AppendMessage(self, username, message):
         if username == self.previous_sender and self.ClearedChat is False:
             username = ""
@@ -273,8 +303,19 @@ class MyFrame(ChatWindow):
         text_ctrl_message.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
         text_ctrl_message.SetForegroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
 
+        text_ctrl_username.Bind(wx.EVT_MOUSEWHEEL, self.MouseEvents)
+        text_ctrl_message.Bind(wx.EVT_MOUSEWHEEL, self.MouseEvents)
+
+        self.splitter_window.Layout()
+        self.panel_chat_window.Layout()
+        self.panel_chat_log.Layout()
         self.panel_chat_log.FitInside()
         self.panel_chat_log.Scroll(0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))
+
+    def EasterEgg(self, event):
+        print("No easteregg yet")
+        return
+        self.AppendMessage('System', "Enter password")
 
     def CheckForUpdate(self):
         try:

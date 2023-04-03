@@ -25,11 +25,13 @@ class GlobalVars(object):
         # noinspection PyProtectedMember
         exe = sys._MEIPASS + '\\'
         app_path = sys.executable
+        debug = False
     else:
         # we are running in a normal Python environment
         print('Not frozen')
         exe = os.path.abspath('./') + '\\'
         app_path = os.path.abspath('../../Testing/Local_Instant_Messenger.exe')
+        debug = True
 
     # Home directory
     my_data_dir = pathlib.Path.home() / 'AppData/Roaming' / "Local_Instant_Messenger"
@@ -43,7 +45,6 @@ class GlobalVars(object):
 
     # Global Variables
     icon = exe + 'Local_Instant_Messenger.ico'
-    debug = False
 
     cfgFile_path = os.path.join(my_data_dir, 'config.cfg')  # Config file
     pwl_path = os.path.join(my_data_dir, 'user_dictionary.txt')  # Personal dictionary

@@ -91,7 +91,7 @@ class MyFrame(ChatWindow):
 
     @staticmethod
     def CheckConnection():
-        server.test_connection()
+        server.send_data()
 
     def OnKey_Press(self, event):  # wxGlade: FrameMain.<event_handler>
         # print('Onkey')
