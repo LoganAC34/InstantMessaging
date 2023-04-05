@@ -7,6 +7,7 @@ import time
 from cryptography.fernet import Fernet
 
 from Project.bin.Scripts import Config
+from Project.bin.Scripts.Global import GlobalVars
 
 
 # SERVER ----------------------------------------------------------------------------------------
@@ -79,7 +80,7 @@ class SocketWorkerThread(threading.Thread):
                         user = args['user']
                         msg = args['message']
                         batchMessage = f'{user}: {msg}'
-                        batchMessage = batchMessage.replace('\n', ' ')
+                        batchMessage = batchMessage.replace(GlobalVars.lineBreak, ' ')
                         subprocess.call(f'msg /SERVER:{self.remote_host} * /TIME:60 "{batchMessage}"', shell=True)
 
                 # Status

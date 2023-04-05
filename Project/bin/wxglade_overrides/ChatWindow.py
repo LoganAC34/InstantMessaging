@@ -47,6 +47,10 @@ class MyFileDropTarget(wx.FileDropTarget):
 class MyFrame(ChatWindow):
     def __init__(self, *args, **kwds):
         ChatWindow.__init__(self, *args, **kwds)
+
+        # Variables
+        self.maxChar = 256
+        self.EasterEgg_Init = False
         self.sent_to = ''
         self.ClearedChat = False
         self.previous_sender = None
@@ -101,6 +105,10 @@ class MyFrame(ChatWindow):
     def ClearTyping(self, event):
         self.TypingUser.SetLabel('')
 
+    @staticmethod
+    def SentTyping():
+        server.typing(Config.get_user_info('alias', 'local'))
+
     # noinspection PyUnusedLocal
     def HandleServer(self, event):
         data = {}
@@ -133,11 +141,12 @@ class MyFrame(ChatWindow):
                 self.timer_typing.Start(1000, oneShot=True)
 
     def OpenSettings(self, event):
-        self.SettingsWindow = FrameSettings.FrameSettings(self)
-        self.SettingsWindow.CentreOnParent()
-        self.SettingsWindow.Show()
-        self.SettingsWindow.MakeModal(True)
-        event.Skip()
+        if not self.SettingsWindow:
+            self.SettingsWindow = FrameSettings.FrameSettings(self)
+            self.SettingsWindow.CentreOnParent()
+            self.SettingsWindow.Show()
+            self.SettingsWindow.MakeModal(True)
+            event.Skip()
 
     def ClearChat(self, event):
         self.sizer_1.Clear(True)
@@ -163,32 +172,6 @@ class MyFrame(ChatWindow):
         print("Stopped checking server connection.")
         self.timer_connection.Stop()
         self.timer_connection_end.Stop()
-
-    def OnKey_Press(self, event):
-        # print('Onkey')
-        unicodeKey = event.GetUnicodeKey()
-        message = self.text_ctrl_message.GetValue()
-        if event.GetModifiers() == wx.MOD_SHIFT and unicodeKey == wx.WXK_RETURN:
-            # print("Shift + Enter")
-            self.text_ctrl_message.WriteText('\n')
-        elif unicodeKey == wx.WXK_RETURN and message:
-            # print("Just Enter with message")
-            self.SendMessage(event)
-        elif unicodeKey == wx.WXK_RETURN:
-            # print("Just Enter") # Prevents sending blank message when hitting enter twice.
-            pass
-        else:
-            server.typing(Config.get_user_info('alias', 'local'))
-            event.Skip()
-        if not self.timer_connection.IsRunning():
-            self.timer_connection.Start(1000)
-        self.timer_connection_end.Start(10000)
-
-    def OnKey_Release(self, event):
-        message = self.text_ctrl_message.GetValue()
-        characters = len(message) + message.count('\n')
-        self.UpdateStatus('characters', characters)
-        event.Skip()
 
     def OnResize(self, event):
         self.panel_chat_log.Scroll(0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))
@@ -240,7 +223,8 @@ class MyFrame(ChatWindow):
         event.Skip()
 
     def OnOpen(self, event):
-        self.CheckForUpdate()
+        if not GlobalVars.debug:
+            self.CheckForUpdate()
         event.Skip()
 
     def UpdateStatus(self, element, status):
@@ -248,12 +232,12 @@ class MyFrame(ChatWindow):
             self.sent_to = status
         if element == 'characters':
             self.characters = str(status)
-        status = f'{self.sent_to} | {self.characters}/256 characters'
+        status = f'{self.sent_to} | {self.characters}/{self.maxChar} characters'
         self.MainFrame_statusbar.SetStatusText(status, 0)
         # print("Event handler 'UpdateStatus' not implemented!")
 
-    def MouseEvents(self, event):
-        # print("Event handler 'MouseEvents' not implemented!")
+    def OnMouseEvents(self, event):
+        # print("Event handler 'OnMouseEvents' not implemented!")
         wheel_direction = event.GetWheelRotation()
         scroll_pos = self.panel_chat_log.GetScrollPos(wx.VERTICAL)
         scroll_rate = 15
@@ -300,11 +284,11 @@ class MyFrame(ChatWindow):
         text_ctrl_message = ExpandoTextCtrl(self.panel_chat_log, wx.ID_ANY, message, style=style)
         sizer.Add(text_ctrl_message, 1, wx.ALL, 0)
         text_ctrl_message.SetFont(font)
-        text_ctrl_message.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
-        text_ctrl_message.SetForegroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
+        text_ctrl_message.SetBackgroundColour(wx.Colour(0, 0, 0))
+        text_ctrl_message.SetForegroundColour(wx.Colour(255, 255, 255))
 
-        text_ctrl_username.Bind(wx.EVT_MOUSEWHEEL, self.MouseEvents)
-        text_ctrl_message.Bind(wx.EVT_MOUSEWHEEL, self.MouseEvents)
+        text_ctrl_username.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseEvents)
+        text_ctrl_message.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseEvents)
 
         self.splitter_window.Layout()
         self.panel_chat_window.Layout()
@@ -313,9 +297,16 @@ class MyFrame(ChatWindow):
         self.panel_chat_log.Scroll(0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))
 
     def EasterEgg(self, event):
-        print("No easteregg yet")
-        return
-        self.AppendMessage('System', "Enter password")
+        print("No Easter egg yet")
+        if GlobalVars.debug:
+            # Binary for "Enter password."
+            self.AppendMessage('<System>', "01000101 01101110 01110100 01100101 01110010 00100000 01110000 01100001 "
+                                           "01110011 01110011 01110111 01101111 01110010 01100100 00101110")
+            self.EasterEgg_Init = True
+
+    def EasterEgg_processing(self):
+        if not self.EasterEgg_Init:
+            return False
 
     def CheckForUpdate(self):
         try:

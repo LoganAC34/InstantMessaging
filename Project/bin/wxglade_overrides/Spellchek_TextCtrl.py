@@ -10,6 +10,7 @@ class SpellCheckTextCtrl(stc.StyledTextCtrl):
     def __init__(self, parent, _id, value, style):
         stc.StyledTextCtrl.__init__(self, parent, id=_id, style=style)
         self.value = value  # Dummy variable to appease main script
+        self.ChatWindow = self.GetGrandParent().GetParent()
 
         # Current word
         self.currentWord = None
@@ -21,6 +22,7 @@ class SpellCheckTextCtrl(stc.StyledTextCtrl):
         self.SetUseVerticalScrollBar(True)  # Enable vertical scroll
         self.SetWrapMode(1)  # Word wrap (possibly set to 3)
         self.SetMarginWidth(1, 0)
+        self.SetMaxLength(GlobalVars.maxCharacterLength)
         # self.SetLexer(stc.STC_LEX_PYTHON)  # Set the lexer to use Python syntax highlighting
 
         # Initialize the spell checker
@@ -34,11 +36,36 @@ class SpellCheckTextCtrl(stc.StyledTextCtrl):
         self.IndicatorSetUnder(0, True)
 
         # Bind the events for spell checking and context menu
-        self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.Bind(wx.EVT_LEFT_UP, self.OnKeyUp)
         self.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
+        self.Bind(wx.EVT_CHAR, self.OnChar)
+        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown, self)
+        self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
+        self.Bind(stc.EVT_STC_CLIPBOARD_PASTE, self.OnPaste)
 
-    def OnKeyUp(self, event, replace=False):
+    def OnChar(self, event):
+        message = self.GetValue()
+        characters = len(message) + message.count(GlobalVars.lineBreak)
+        # Check if adding the new character will exceed the maximum length
+        if characters >= GlobalVars.maxCharacterLength:
+            print("Max characters_1")
+            return  # Ignore the event
+        else:
+            event.Skip()  # Allow the character to be added
+
+    def OnPaste(self, event):
+        message = self.GetValue()
+        characters = len(message) + message.count(GlobalVars.lineBreak) + len(wx.stc.StyledTextEvent.GetText(event))
+        if characters >= GlobalVars.maxCharacterLength:
+            print("Max characters_2")
+            wx.stc.StyledTextEvent.SetText(event, '')
+        else:
+            event.Skip()  # Allow the character to be added
+
+    def OnKeyUp(self, event):
+        self.SpellCheck(event)
+
+    def SpellCheck(self, event, replace=False):
         # print("Checking Spelling")
         if not replace:
             event.Skip()
@@ -71,8 +98,41 @@ class SpellCheckTextCtrl(stc.StyledTextCtrl):
         if not replace:
             wx.CallAfter(event.Skip)
 
+    def OnKeyDown(self, event):
+        # print('Onkey')
+        unicodeKey = event.GetUnicodeKey()
+        message = self.GetValue().replace(GlobalVars.lineBreak, '').replace('\n', '')
+        characters = len(message) + message.count(GlobalVars.lineBreak)
+        self.ChatWindow.UpdateStatus('characters', characters)
+        self.SpellCheck(event, True)
+        checkConnection = False
+
+        if event.GetModifiers() == wx.MOD_SHIFT and unicodeKey == wx.WXK_RETURN:
+            # print("Shift + Enter")
+            event.Skip()
+            checkConnection = True
+        elif unicodeKey == wx.WXK_RETURN and len(message) > 0:
+            # print("Just Enter with message")
+            if not self.ChatWindow.EasterEgg_processing():
+                self.ChatWindow.SendMessage(event)
+                checkConnection = True
+        elif unicodeKey == wx.WXK_RETURN and len(message) == 0:
+            # Prevents sending blank message when hitting enter twice.
+            # print("Just Enter")
+            checkConnection = True
+            pass  # Allow the event to continue
+        elif unicodeKey != 0:
+            self.ChatWindow.SentTyping()
+            checkConnection = True
+            event.Skip()
+
+        if checkConnection:
+            if not self.ChatWindow.timer_connection.IsRunning():
+                self.ChatWindow.timer_connection.Start(1000)
+            self.ChatWindow.timer_connection_end.Start(10000)
+
     def OnRightUp(self, event):
-        self.OnKeyUp(event, True)
+        self.SpellCheck(event, True)
         if self.currentWord:
             menu = wx.Menu()
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+import string
+
 import wx.adv
 import wx.lib.agw.persist
 import wx.lib.newevent
@@ -18,14 +20,52 @@ class FrameSettings(SettingsWindow):
         self._disabler = None
         self.SetIcon(wx.Icon(GlobalVars.icon))
 
+        # Local name
         local_name = Config.get_user_info('alias', 'local')
         self.text_ctrl_Local_Name.SetValue(local_name)
+
+        # Character limits
+        # space, select punctuation, alphanumeric, backspace, del, left-right
+        allowableChars = ' .-_&' + string.ascii_letters + string.digits
+        allowableActions = [1, 3, 22, 24, 26, 393, 25, 313, 312, 314, 315, 317, 8, 127, 314, 316, ord('\t')]
+        self.allowableChars = [ord(x) for x in allowableChars] + allowableActions
+        self.maxNameLength = 15
+        self.tooltip = "Allowable characters: letter, numbers, spaces, .-_&"
+        self.text_ctrl_Local_Name.SetMaxLength(self.maxNameLength)
+        self.text_ctrl_Local_Name.SetToolTip(self.tooltip)
 
         # Add users to UI
         users = Config.get_user_count()
         num = list(range(1, users + 1))
         for x in num:
             self.AddUser_UI(x)
+
+    def OnChar(self, event):
+        key_code = event.GetKeyCode()
+        character = chr(key_code)
+        # rint(f"Unicode character: {key_code}")
+
+        # Allow characters and tab navigation between TextCtrls
+        if key_code in self.allowableChars:  # Test if pasting
+            if key_code == wx.WXK_CONTROL_V:  # If so, test clipboard data
+                not_empty = wx.TheClipboard.IsSupported(wx.DataFormat(wx.DF_UNICODETEXT))
+                text_data = wx.TextDataObject()
+                if not_empty:
+                    wx.TheClipboard.Open()
+                    wx.TheClipboard.GetData(text_data)
+                    wx.TheClipboard.Close()
+                    clipboard = text_data.GetText()
+                    for x in clipboard:
+                        if ord(x) not in self.allowableChars:
+                            print(f'blocked clipboard: "{clipboard}" for character "{x}" unicode: {ord(x)}')
+                            return  # Block paste and end loop
+                    event.Skip()  # Allow paste
+
+            else:  # If not pasting, check character
+                # print(f'allowed character: "{character}"')
+                event.Skip()  # Allow character
+        else:
+            print(f'blocked character "{character}" unicode: {key_code}')
 
     def AddUser_UI(self, user_num):
         # If existing, get values:
@@ -62,7 +102,7 @@ class FrameSettings(SettingsWindow):
         sizer_User_DeviceName.Add(label_User_DeviceName, 0, wx.ALL, 2)
 
         text_ctrl_User_DeviceName = wx.TextCtrl(self.panel_Main, wx.ID_ANY, "")
-        text_ctrl_User_DeviceName.SetMinSize((100, 20))
+        text_ctrl_User_DeviceName.SetMinSize((120, 20))
         text_ctrl_User_DeviceName.SetValue(device_name)
         sizer_User_DeviceName.Add(text_ctrl_User_DeviceName, 0, wx.ALL, 2)
 
@@ -74,8 +114,11 @@ class FrameSettings(SettingsWindow):
         sizer_User_Alias.Add(label_User_Alias, 0, wx.ALL, 2)
 
         text_ctrl_User_Alias = wx.TextCtrl(self.panel_Main, wx.ID_ANY, "")
-        text_ctrl_User_Alias.SetMinSize((100, 20))
+        text_ctrl_User_Alias.SetMinSize((120, 20))
         text_ctrl_User_Alias.SetValue(alias)
+        text_ctrl_User_Alias.SetMaxLength(self.maxNameLength)
+        text_ctrl_User_Alias.SetToolTip(self.tooltip)
+        text_ctrl_User_Alias.Bind(wx.EVT_CHAR, self.OnChar, text_ctrl_User_Alias)
         sizer_User_Alias.Add(text_ctrl_User_Alias, 0, wx.ALL, 2)
 
         checkbox_User_AliasOverride = wx.CheckBox(self.panel_Main, wx.ID_ANY, "Override Alias?")

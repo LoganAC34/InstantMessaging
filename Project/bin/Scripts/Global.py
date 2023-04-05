@@ -45,6 +45,8 @@ class GlobalVars(object):
 
     # Global Variables
     icon = exe + 'Local_Instant_Messenger.ico'
+    maxCharacterLength = 256
+    lineBreak = '\r'
 
     cfgFile_path = os.path.join(my_data_dir, 'config.cfg')  # Config file
     pwl_path = os.path.join(my_data_dir, 'user_dictionary.txt')  # Personal dictionary
