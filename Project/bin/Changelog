@@ -1,0 +1,19 @@
+v2.2.0 - Minor Release
+ - Added version number to title
+ - Added max character limit to name fields and message box
+ - Added valid characters to name fields
+ - Added typing indicator
+ - Added spell check to message box
+
+v.2.0.0 - Major Release
+ - Overhauled code for efficiency and organization.
+ - Improved UI responsiveness.
+ - Added menu bar at top of window for changing settings such as your name and which computer you are going to send messages to (you can add more than one recipient, but only the first one works currently).
+ - Added clear chat button.
+ - Added status to indicate how message will be sent (Windows popup or though the app).
+ - Added character count for your message (256 is how many windows popup can send).
+ - Changed it so if you or the other person sends multiple messages in a row, your name only appears once and not multiple times.
+ - Update download is a lot faster (almost instant in testing).
+ - User name column now resizes to the longest username during session.
+
+v.1.0.0 - Initial Release
