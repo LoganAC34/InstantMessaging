@@ -58,7 +58,8 @@ class MyFrame(ChatWindow):
         self.characters = 0
         self.SetDoubleBuffered(True)
         self.SetIcon(wx.Icon(GlobalVars.icon))
-        self.UserNameWidth = 50
+        self.UserNameWidth_Default = 50
+        self.UserNameWidth = self.UserNameWidth_Default
 
         # Remember window size and position
         self._persistMgr = wx.lib.agw.persist.PersistenceManager.Get()
@@ -153,6 +154,7 @@ class MyFrame(ChatWindow):
         self.ClearedChat = True
         self.panel_chat_log.Scroll(0, 0)
         self.panel_chat_log.FitInside()
+        self.UserNameWidth = self.UserNameWidth_Default
 
     def SendMessage(self, event):
         message = self.text_ctrl_message.GetValue()
@@ -275,17 +277,20 @@ class MyFrame(ChatWindow):
         if width > self.UserNameWidth:
             self.UserNameWidth = width
 
+        color_background = wx.Colour(0, 0, 0)
+        color_text = wx.Colour(255, 255, 255)
+
         text_ctrl_username.SetMinSize((self.UserNameWidth, height))
         sizer.Add(text_ctrl_username, 0, wx.LEFT, 3)
-        text_ctrl_username.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
-        text_ctrl_username.SetForegroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
+        text_ctrl_username.SetBackgroundColour(color_background)
+        text_ctrl_username.SetForegroundColour(color_text)
 
         style = wx.BORDER_NONE | wx.TE_MULTILINE | wx.TE_NO_VSCROLL | wx.TE_READONLY | wx.TE_AUTO_URL
         text_ctrl_message = ExpandoTextCtrl(self.panel_chat_log, wx.ID_ANY, message, style=style)
         sizer.Add(text_ctrl_message, 1, wx.ALL, 0)
         text_ctrl_message.SetFont(font)
-        text_ctrl_message.SetBackgroundColour(wx.Colour(0, 0, 0))
-        text_ctrl_message.SetForegroundColour(wx.Colour(255, 255, 255))
+        text_ctrl_message.SetBackgroundColour(color_background)
+        text_ctrl_message.SetForegroundColour(color_text)
 
         text_ctrl_username.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseEvents)
         text_ctrl_message.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseEvents)
