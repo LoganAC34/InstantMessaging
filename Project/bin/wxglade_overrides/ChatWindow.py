@@ -47,6 +47,8 @@ class MyFileDropTarget(wx.FileDropTarget):
 class MyFrame(ChatWindow):
     def __init__(self, *args, **kwds):
         ChatWindow.__init__(self, *args, **kwds)
+        # TODO: Update version number
+        self.SetTitle("Chat Window - v2.1.0")
 
         # Variables
         self.maxChar = 256
