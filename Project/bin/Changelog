@@ -1,3 +1,6 @@
+v2.2.1 - Patch Release
+ - Fixed message box to allow functional keys like home, end, page up/down, and arrow keys.
+
 v2.2.0 - Minor Release
  - Added version number to title
  - Added max character limit to name fields and message box

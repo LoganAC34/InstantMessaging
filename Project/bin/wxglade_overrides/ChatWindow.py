@@ -49,7 +49,7 @@ class MyFrame(ChatWindow):
         ChatWindow.__init__(self, *args, **kwds)
         # TODO: Update version number
         # TODO: Update changelog
-        self.SetTitle("Chat Window - v2.1.0")
+        self.SetTitle("Chat Window - v2.1.1")
 
         # Variables
         self.maxChar = 256
