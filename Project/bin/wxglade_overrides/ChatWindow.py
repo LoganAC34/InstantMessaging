@@ -21,6 +21,7 @@ from Project.bin.Scripts import Config
 from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.Scripts.Server import SocketWorkerThread
 from Project.bin.wxglade.ChatWindow import *
+from Project.bin.wxglade_overrides import EasterEgg
 from Project.bin.wxglade_overrides import FrameSettings
 
 drop_event, EVT_DROP_EVENT = wx.lib.newevent.NewEvent()
@@ -53,11 +54,11 @@ class MyFrame(ChatWindow):
 
         # Variables
         self.maxChar = 256
-        self.EasterEgg_Init = False
         self.sent_to = ''
         self.ClearedChat = False
         self.previous_sender = None
         self.SettingsWindow = None
+        self.EasterEggWindow = None
         self.characters = 0
         self.SetDoubleBuffered(True)
         self.SetIcon(wx.Icon(GlobalVars.icon))
@@ -305,21 +306,12 @@ class MyFrame(ChatWindow):
         self.panel_chat_log.Scroll(0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))
 
     def EasterEgg(self, event):
-        print("No Easter egg yet")
-        if GlobalVars.debug:
-            # Binary for "A million deaths is not enough for Master Rahool."
-            self.AppendMessage('<System>', "01000001 00100000 01101101 01101001 01101100 01101100 01101001 01101111 "
-                                           "01101110 00100000 01100100 01100101 01100001 01110100 01101000 01110011 "
-                                           "00100000 01101001 01110011 00100000 01101110 01101111 01110100 00100000 "
-                                           "01100101 01101110 01101111 01110101 01100111 01101000 00100000 01100110 "
-                                           "01101111 01110010 00100000 01001101 01100001 01110011 01110100 01100101 "
-                                           "01110010 00100000 01010010 01100001 01101000 01101111 01101111 01101100 "
-                                           "00101110")
-            self.EasterEgg_Init = True
-
-    def EasterEgg_processing(self):
-        if not self.EasterEgg_Init:
-            return False
+        if GlobalVars.debug and not self.EasterEggWindow:
+            self.EasterEggWindow = EasterEgg.EasterEggWindow(self)
+            self.EasterEggWindow.Show()
+            event.Skip()
+        else:
+            print("No Easter egg yet")
 
     def CheckForUpdate(self):
         try:

@@ -100,9 +100,9 @@ class SpellCheckTextCtrl(stc.StyledTextCtrl):
 
     def OnKeyDown(self, event):
         # print('Onkey')
-        allowed_keys = [313, 312, 366, 367, 314, 315, 316, 317]
         unicodeKey = event.GetUnicodeKey()
         keycode = event.KeyCode
+        print(keycode)
         message = self.GetValue().replace(GlobalVars.lineBreak, '').replace('\n', '')
         characters = len(message) + message.count(GlobalVars.lineBreak)
         self.ChatWindow.UpdateStatus('characters', characters)
@@ -117,9 +117,8 @@ class SpellCheckTextCtrl(stc.StyledTextCtrl):
         elif unicodeKey == wx.WXK_RETURN and len(message) > 0:
             # Hitting enter with message content
             # print("Just Enter with message")
-            if not self.ChatWindow.EasterEgg_processing():
-                self.ChatWindow.SendMessage(event)
-                checkConnection = True
+            self.ChatWindow.SendMessage(event)
+            checkConnection = True
         elif unicodeKey == wx.WXK_RETURN and len(message) == 0:
             # Prevents sending blank message when hitting enter twice.
             # print("Just Enter")
@@ -129,7 +128,7 @@ class SpellCheckTextCtrl(stc.StyledTextCtrl):
             self.ChatWindow.SentTyping()
             checkConnection = True
             event.Skip()
-        elif keycode in allowed_keys:
+        elif keycode in GlobalVars.allowed_keys:
             # Allowing various function keys (Arrow keys, Home, End, Page up/down)
             event.Skip()
 
