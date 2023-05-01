@@ -1,3 +1,6 @@
+v2.3.0 - Minor Release
+ - Added ability to get your fortune
+
 v2.2.1 - Patch Release
  - Fixed message box to allow functional keys like home, end, page up/down, and arrow keys.
 

@@ -11,13 +11,14 @@ from Project.bin.Scripts import Config
 from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.wxglade.SettingsWindow import *
 from Project.bin.wxglade_overrides import ChatWindow
+from Project.bin.wxglade_overrides import WarningMessage
 
 
 class FrameSettings(SettingsWindow):
     def __init__(self, *args, **kwds):
         SettingsWindow.__init__(self, *args, **kwds)
+        self.WarningMessage = None
         self.server = ChatWindow.server
-        self._disabler = None
         self.SetIcon(wx.Icon(GlobalVars.icon))
 
         # Local name
@@ -43,7 +44,7 @@ class FrameSettings(SettingsWindow):
     def OnChar(self, event):
         key_code = event.GetKeyCode()
         character = chr(key_code)
-        # rint(f"Unicode character: {key_code}")
+        # print(f"Unicode character: {key_code}")
 
         # Allow characters and tab navigation between TextCtrls
         if key_code in self.allowableChars:  # Test if pasting
@@ -154,37 +155,62 @@ class FrameSettings(SettingsWindow):
         else:
             print("Not removing user last user")
 
+    def CheckFields(self):
+        all_good = True
+        value = self.text_ctrl_Local_Name.GetValue().lower()
+
+        # ('<Blocked word>', [('<find>', '<replace>'),...]) <- Blocked word template
+        blocked_words = [('Fortune Teller', [('0', 'o'), ('i', 'l'), ('_', ' '), ('-', ' ')])]
+        value_replacement_check = value
+        for word in blocked_words:
+            blocked_word = word[0].lower()
+            for replacing in word[1]:
+                find = replacing[0].lower()
+                replace = replacing[1].lower()
+                value_replacement_check = value_replacement_check.replace(find, replace)
+            if blocked_word in value_replacement_check:
+                all_good = False
+
+        if value.strip() == 'system':
+            all_good = False
+
+        return all_good
+
     def Apply_OnClick(self, event):
-        local_name = self.text_ctrl_Local_Name.GetValue()
-        Config.set_user_info('alias', local_name, 'local')
+        all_good = self.CheckFields()
+        if all_good:
+            local_name = self.text_ctrl_Local_Name.GetValue()
+            Config.set_user_info('alias', local_name, 'local')
 
-        # Get settings attributes
-        users = self.sizer_RemoteUsers.GetChildren()
-        for x, user in enumerate(users):
-            sizer = user.Sizer.GetChildren()[1]
-            user_DeviceName = sizer.Sizer.GetChildren()[0].Sizer.GetChildren()[1].GetWindow().GetValue()
-            user_Alias = sizer.Sizer.GetChildren()[1].Sizer.GetChildren()[1].GetWindow().GetValue()
-            user_Override = sizer.Sizer.GetChildren()[2].GetWindow().GetValue()
-            x += 1
-            Config.set_user_info('device_name', user_DeviceName, 'remote', x)
-            Config.set_user_info('alias', user_Alias, 'remote', x)
-            Config.set_user_info('override', user_Override, 'remote', x)
-            print(f'REMOTE_USER_{x} | {user_DeviceName} | {user_Alias} | {str(user_Override)}')
+            # Get settings attributes
+            users = self.sizer_RemoteUsers.GetChildren()
+            for x, user in enumerate(users):
+                sizer = user.Sizer.GetChildren()[1]
+                user_DeviceName = sizer.Sizer.GetChildren()[0].Sizer.GetChildren()[1].GetWindow().GetValue()
+                user_Alias = sizer.Sizer.GetChildren()[1].Sizer.GetChildren()[1].GetWindow().GetValue()
+                user_Override = sizer.Sizer.GetChildren()[2].GetWindow().GetValue()
+                x += 1
+                Config.set_user_info('device_name', user_DeviceName, 'remote', x)
+                Config.set_user_info('alias', user_Alias, 'remote', x)
+                Config.set_user_info('override', user_Override, 'remote', x)
+                print(f'REMOTE_USER_{x} | {user_DeviceName} | {user_Alias} | {str(user_Override)}')
 
-        GlobalVars.queue_from_server.put({'function': 'update_variables', 'args': ''})
-        self.OnClose()
+            GlobalVars.queue_from_server.put({'function': 'update_variables', 'args': ''})
+            self.OnClose()
+        else:
+            print("Not good")
+            if not self.WarningMessage:
+                self.WarningMessage = WarningMessage.WaringMessage(self)
+                self.WarningMessage.CentreOnParent()
+            self.Disable()
+            self.WarningMessage.Show()
+            event.Skip()
         # event.Skip()
 
     def Cancel_OnClick(self, event):  # wxGlade: SettingsWindow.<event_handler>
         self.OnClose()
 
     def OnClose(self, event=None):
-        self.MakeModal(False)
+        self.Parent.Enable()
         self.Destroy()
         print("Closing settings")
-
-    def MakeModal(self, modal=True):
-        if modal and not hasattr(self, '_disabler'):
-            self._disabler = wx.WindowDisabler(self)
-        if not modal and hasattr(self, '_disabler'):
-            del self._disabler

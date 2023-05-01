@@ -5,6 +5,13 @@ import sys
 
 
 class GlobalVars(object):
+    # TODO: Update version number
+    # TODO: Update changelog
+    # MAJOR version when you make incompatible API changes
+    # MINOR version when you add functionality in a backwards compatible manner
+    # PATCH version when you make backwards compatible bug fixes
+    version_number = 'v2.3.0'
+
     # Relative and exe paths
     """
     try:

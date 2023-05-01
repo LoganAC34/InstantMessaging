@@ -3,6 +3,7 @@
 import os
 import pickle
 import queue
+import random
 import shutil
 import subprocess
 import tempfile
@@ -48,9 +49,7 @@ class MyFileDropTarget(wx.FileDropTarget):
 class MyFrame(ChatWindow):
     def __init__(self, *args, **kwds):
         ChatWindow.__init__(self, *args, **kwds)
-        # TODO: Update version number
-        # TODO: Update changelog
-        self.SetTitle("Chat Window - v2.1.1")
+        self.SetTitle(f"Chat Window - {GlobalVars.version_number}")
 
         # Variables
         self.maxChar = 256
@@ -149,8 +148,8 @@ class MyFrame(ChatWindow):
         if not self.SettingsWindow:
             self.SettingsWindow = FrameSettings.FrameSettings(self)
             self.SettingsWindow.CentreOnParent()
+            self.Disable()
             self.SettingsWindow.Show()
-            self.SettingsWindow.MakeModal(True)
             event.Skip()
 
     def ClearChat(self, event):
@@ -312,6 +311,42 @@ class MyFrame(ChatWindow):
             event.Skip()
         else:
             print("No Easter egg yet")
+
+    def Fortunes(self, event):
+        menu = wx.Menu()
+
+        for x, entry in enumerate(["Good", "Bad", "Random"]):
+            item = menu.Append(x, entry)
+            self.Bind(wx.EVT_MENU, self.OnFortuneSelect, item)
+
+        self.PopupMenu(menu)
+
+    def OnFortuneSelect(self, event):
+        def read_fortune(_fortune_type):
+            fortunes = []
+            fortune_path = GlobalVars.exe + rf'Resources\Fortunes_{_fortune_type}'
+            with open(fortune_path) as file:
+                while line := file.readline():
+                    fortunes.append(line.rstrip())
+
+            PC_Local_Name = Config.get_user_info('alias', 'local')
+            fortune_name = 'Fortune Teller'  # 'System'
+            num = random.randint(0, len(fortunes))
+            fortune = f"{PC_Local_Name} your fortune is: \"{fortunes[num]}\""
+            print(fortune)
+            self.AppendMessage(fortune_name, fortune)
+            server.send_message(fortune_name, fortune)
+
+        # Get the selected suggestion
+        fortune_type = event.GetEventObject().GetLabel(event.Id)
+        print(f"{fortune_type} fortune selected")
+
+        if fortune_type != 'Good' and fortune_type != 'Bad':
+            if random.randint(0, 1) == 0:
+                fortune_type = 'Good'
+            else:
+                fortune_type = 'Bad'
+        read_fortune(fortune_type)
 
     def CheckForUpdate(self):
         try:
