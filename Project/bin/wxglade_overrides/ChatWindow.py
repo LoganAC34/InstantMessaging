@@ -332,7 +332,11 @@ class MyFrame(ChatWindow):
             PC_Local_Name = Config.get_user_info('alias', 'local')
             fortune_name = 'Fortune Teller'  # 'System'
             num = random.randint(0, len(fortunes))
-            fortune = f"{PC_Local_Name} your fortune is: \"{fortunes[num]}\""
+            while True:
+                fortune = fortunes[num]
+                if fortune[0] != '#' and fortune != '':
+                    break
+            fortune = f"{PC_Local_Name} your fortune is: \"{fortune}\""
             print(fortune)
             self.AppendMessage(fortune_name, fortune)
             server.send_message(fortune_name, fortune)

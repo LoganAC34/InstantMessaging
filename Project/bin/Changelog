@@ -1,3 +1,7 @@
+v2.4.0 - Patch Release
+ - Added more good and bad fortunes.
+ - Added the ability to leave comments in fortune files like in python with "#".
+
 v2.3.0 - Minor Release
  - Added ability to get your fortune
 
