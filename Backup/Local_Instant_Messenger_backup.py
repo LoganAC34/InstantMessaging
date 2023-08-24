@@ -28,9 +28,9 @@ class MyFrame(ChatWindow):
         # noinspection PyGlobalUndefined
         global server
         server = SocketWorkerThread(self.queue_to_server, self.queue_from_server)
-        self.timer = wx.Timer(self)
-        self.timer.Start(100)
-        self.Bind(wx.EVT_TIMER, self.HandleServer, self.timer)
+        self.timer_typing = wx.Timer(self)
+        self.timer_typing.Start(100)
+        self.Bind(wx.EVT_TIMER, self.HandleServer, self.timer_typing)
 
         # Variables
         self.temp_file = None

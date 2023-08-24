@@ -87,7 +87,7 @@ class SocketWorkerThread(threading.Thread):
                 action = 'Will send'
                 if function == 'message':
                     action = 'Sent'
-                out = {'function': 'status', 'args': f"{action} to {self.remote_host} via {via}."}
+                out = {'function': 'status', 'args': [action, self.remote_host, via]}
                 self.queue_to_app.put(out)
 
             self.out_data = None

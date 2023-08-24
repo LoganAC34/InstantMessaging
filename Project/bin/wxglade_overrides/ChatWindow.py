@@ -135,8 +135,7 @@ class MyFrame(ChatWindow):
                     popup.SetIcon(wx.Icon(GlobalVars.icon))
                     popup.Show()
             elif function == 'status':
-                status = args
-                self.UpdateStatus('sent to', status)
+                self.UpdateStatus('sent to', args)
             elif function == 'update_variables':
                 server.update_variables()
             elif function == 'typing':
@@ -180,7 +179,8 @@ class MyFrame(ChatWindow):
 
     def OnResize(self, event):
         self.panel_chat_log.Scroll(0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))
-        event.Skip()
+        if event:
+            event.Skip()
 
     def OnClose(self, event):
         # self.queue_to_server.put("Command:Shutdown")
@@ -234,11 +234,18 @@ class MyFrame(ChatWindow):
 
     def UpdateStatus(self, element, status):
         if element == 'sent to':
-            self.sent_to = status
+            if status[0] == 'Will send':
+                self.StatusDevice.SetLabel(status[1])
+                if status[2] == 'app':
+                    self.StatusConnected.SetForegroundColour((0, 255, 0))
+                else:
+                    self.StatusConnected.SetForegroundColour((225, 0, 0))
+            self.Refresh()
+
         if element == 'characters':
             self.characters = str(status)
-        status = f'{self.sent_to} | {self.characters}/{self.maxChar} characters'
-        self.MainFrame_statusbar.SetStatusText(status, 0)
+            self.StatusCharacters.SetLabel(f'{self.characters}/{self.maxChar} characters')
+
         # print("Event handler 'UpdateStatus' not implemented!")
 
     def OnMouseEvents(self, event):
@@ -302,11 +309,11 @@ class MyFrame(ChatWindow):
         self.panel_chat_window.Layout()
         self.panel_chat_log.Layout()
         self.panel_chat_log.FitInside()
-        self.panel_chat_log.Scroll(0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))
+        wx.CallAfter(self.OnResize, None)
 
     def EasterEgg(self, event):
         if GlobalVars.debug and not self.EasterEggWindow:
-            self.EasterEggWindow = EasterEgg.EasterEggWindow(self)
+            self.EasterEggWindow = EasterEgg.EasterEgg(self)
             self.EasterEggWindow.Show()
             event.Skip()
         else:

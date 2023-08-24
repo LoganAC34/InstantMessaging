@@ -19,13 +19,14 @@ class EasterEggWindow(wx.Frame):
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
         self.SetSize((400, 344))
-        self.SetTitle("Easter Egg")
+        self.SetTitle("Secret window")
 
         self.panel_1 = wx.Panel(self, wx.ID_ANY)
 
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
 
-        self.Output = wx.TextCtrl(self.panel_1, wx.ID_ANY, "", style=wx.TE_BESTWRAP | wx.TE_MULTILINE | wx.TE_READONLY)
+        # self.Output = wx.TextCtrl(self.panel_1, wx.ID_ANY, "", style=wx.TE_BESTWRAP | wx.TE_MULTILINE | wx.TE_READONLY)
+        self.Output = TypingTextCtrl(self.panel_1, wx.ID_ANY, style=wx.TE_BESTWRAP | wx.TE_MULTILINE | wx.TE_READONLY)
         self.Output.SetBackgroundColour(wx.Colour(255, 255, 255))
         sizer_1.Add(self.Output, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5)
 
@@ -40,3 +41,26 @@ class EasterEggWindow(wx.Frame):
         # end wxGlade
 
 # end of class EasterEggWindow
+
+class TypingTextCtrl(wx.Control):
+    def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0,
+                 validator=wx.DefaultValidator, name="TypingTextCtrl"):
+        wx.Control.__init__(self, parent, id, pos, size, style, validator, name)
+        self.Bind(wx.EVT_PAINT, self.on_paint)
+
+    def on_paint(self, event):
+        buffer = wx.Bitmap(self.GetSize())
+        dc = wx.BufferedPaintDC(self, buffer)
+        self.prepare_dc(dc)
+        self.draw_text(dc)
+        del dc
+
+    def prepare_dc(self, dc):
+        dc.SetBackground(wx.WHITE_BRUSH)
+        dc.Clear()
+
+    def draw_text(self, dc):
+        font = self.GetFont()
+        dc.SetFont(font)
+        dc.SetTextForeground(wx.BLACK)
+        dc.DrawLabel(self.GetLabel(), self.GetClientRect(), wx.ALIGN_LEFT | wx.ALIGN_TOP)
