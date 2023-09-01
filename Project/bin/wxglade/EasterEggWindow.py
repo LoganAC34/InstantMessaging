@@ -13,9 +13,9 @@ import wx
 # end wxGlade
 
 
-class EasterEggWindow(wx.Frame):
+class EasterEgg(wx.Frame):
     def __init__(self, *args, **kwds):
-        # begin wxGlade: EasterEggWindow.__init__
+        # begin wxGlade: EasterEgg.__init__
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
         self.SetSize((400, 344))
@@ -26,7 +26,8 @@ class EasterEggWindow(wx.Frame):
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
 
         # self.Output = wx.TextCtrl(self.panel_1, wx.ID_ANY, "", style=wx.TE_BESTWRAP | wx.TE_MULTILINE | wx.TE_READONLY)
-        self.Output = TypingTextCtrl(self.panel_1, wx.ID_ANY, style=wx.TE_BESTWRAP | wx.TE_MULTILINE | wx.TE_READONLY)
+        self.Output = TypingTextCtrl(self.panel_1, wx.ID_ANY,
+                                     style=wx.TE_BESTWRAP | wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH | wx.TE_RICH2)
         self.Output.SetBackgroundColour(wx.Colour(255, 255, 255))
         sizer_1.Add(self.Output, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.TOP, 5)
 
@@ -40,7 +41,8 @@ class EasterEggWindow(wx.Frame):
         self.Layout()
         # end wxGlade
 
-# end of class EasterEggWindow
+
+# end of class EasterEgg
 
 class TypingTextCtrl(wx.Control):
     def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition, size=wx.DefaultSize, style=0,

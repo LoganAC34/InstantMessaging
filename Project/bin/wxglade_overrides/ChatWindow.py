@@ -313,7 +313,7 @@ class MyFrame(ChatWindow):
 
     def EasterEgg(self, event):
         if GlobalVars.debug and not self.EasterEggWindow:
-            self.EasterEggWindow = EasterEgg.EasterEgg(self)
+            self.EasterEggWindow = EasterEgg.EasterEggOverride(self)
             self.EasterEggWindow.Show()
             event.Skip()
         else:

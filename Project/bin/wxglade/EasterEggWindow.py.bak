@@ -11,9 +11,9 @@ import wx
 # end wxGlade
 
 
-class EasterEggWindow(wx.Frame):
+class EasterEgg(wx.Frame):
     def __init__(self, *args, **kwds):
-        # begin wxGlade: EasterEggWindow.__init__
+        # begin wxGlade: EasterEgg.__init__
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
         self.SetSize((400, 344))
@@ -36,4 +36,4 @@ class EasterEggWindow(wx.Frame):
         self.Layout()
         # end wxGlade
 
-# end of class EasterEggWindow
+# end of class EasterEgg

@@ -1,12 +1,12 @@
 import yaml
 
 from Project.bin.Scripts.Global import GlobalVars
-from Project.bin.wxglade.EasterEggWindow import *
+from Project.bin.wxglade.EasterEgg import *
 
 
-class EasterEgg(EasterEggWindow):
+class EasterEggOverride(EasterEgg):
     def __init__(self, *args, **kwds):
-        EasterEggWindow.__init__(self, *args, **kwds)
+        EasterEgg.__init__(self, *args, **kwds)
 
         # Load the JSON file containing the game data
         yaml_file = GlobalVars.exe + r'Resources\EasterEgg.yaml'
@@ -59,8 +59,15 @@ class EasterEgg(EasterEggWindow):
         else:
             event.Skip()
 
+    def OnResize(self, event):
+        self.Output.Layout()
+        self.Output.SetScrollPos(orientation=wx.VERTICAL, pos=self.Output.GetScrollRange(wx.VERTICAL))
+        self.Output.SetInsertionPoint(-1)
+        if event:
+            event.Skip()
+
     def TypeString(self, text):
-        if text not in self.Output.GetValue():
+        if text not in self.Output.GetLabel():
             typing_speed = round(2000 / len(text))  # Time in milliseconds it should take to type the entire message.
             self.typing_text += text
             self.timer_typing.Start(typing_speed)
@@ -69,8 +76,8 @@ class EasterEgg(EasterEggWindow):
 
     def typing(self, event):
         self.current_text += self.typing_text[len(self.current_text)]
-        self.Output.SetValue(self.current_text)
-        self.Output.ShowPosition(self.Output.GetLastPosition())
+        self.Output.SetLabelText(self.current_text)
+        wx.CallAfter(self.OnResize, None)
         if self.current_text == self.typing_text:
             self.timer_typing.Stop()
             self.Input.Enable()
