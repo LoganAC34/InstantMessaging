@@ -90,6 +90,8 @@ class MyFrame(ChatWindow):
         self.Bind(wx.EVT_TIMER, self.CheckConnection, self.timer_connection)
         self.Bind(wx.EVT_TIMER, self.CheckConnection_Stop, self.timer_connection_end)
         self.Bind(wx.EVT_TIMER, self.ClearTyping, self.timer_typing)
+        self.timer_connection.Start(1000)  # Start checking connection
+
 
         # Variables
         self.temp_file = None
@@ -173,9 +175,10 @@ class MyFrame(ChatWindow):
         server.connection_status(Config.get_user_info('alias', 'local'))
 
     def CheckConnection_Stop(self, event):
-        print("Stopped checking server connection.")
-        self.timer_connection.Stop()
-        self.timer_connection_end.Stop()
+        # print("Stopped checking server connection.")
+        # self.timer_connection.Stop()
+        # self.timer_connection_end.Stop()
+        pass
 
     def OnResize(self, event):
         self.panel_chat_log.Scroll(0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))

@@ -3,6 +3,7 @@ import socket
 import subprocess
 import threading
 import time
+from datetime import datetime
 
 from cryptography.fernet import Fernet
 
@@ -52,6 +53,9 @@ class SocketWorkerThread(threading.Thread):
 
         while True:
             time.sleep(0.01)
+            current_time = datetime.now()
+            current_time_formatted = f"{current_time.hour}:{current_time.minute}:{current_time.second}:{current_time.microsecond}"
+
             if self.out_data:
                 # data = {'user': self._user, 'message': self._msg}
                 # {'function': 'message', 'args': {'user': user, 'message': msg}}
@@ -63,7 +67,7 @@ class SocketWorkerThread(threading.Thread):
                     print("Sending message to " + self.remote_host + ":" + str(send_port))
                     print(self.out_data['args']['message'])
                 elif function == 'status':
-                    print("Testing connection to " + self.remote_host + ":" + str(send_port))
+                    print(f"Testing connection to {self.remote_host}:{str(send_port)} [{current_time_formatted}]")
                 elif function == 'typing':
                     print("Telling " + self.remote_host + ":" + str(send_port) + " You're typing.")
 
