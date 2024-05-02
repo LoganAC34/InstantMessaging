@@ -30,7 +30,7 @@ class FrameSettings(SettingsWindow):
         allowableChars = ' .-_&' + string.ascii_letters + string.digits
         allowableActions = [1, 3, 22, 24, 26, 393, 25, 313, 312, 314, 315, 317, 8, 127, 314, 316, ord('\t')]
         self.allowableChars = [ord(x) for x in allowableChars] + allowableActions
-        self.maxNameLength = 15
+        self.maxNameLength = 20
         self.tooltip = "Allowable characters: letter, numbers, spaces, .-_&"
         self.text_ctrl_Local_Name.SetMaxLength(self.maxNameLength)
         self.text_ctrl_Local_Name.SetToolTip(self.tooltip)

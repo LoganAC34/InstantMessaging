@@ -63,6 +63,7 @@ class MyFrame(ChatWindow):
         self.SetIcon(wx.Icon(GlobalVars.icon))
         self.UserNameWidth_Default = 50
         self.UserNameWidth = self.UserNameWidth_Default
+        self.UpdateStatus('characters', 0)
 
         # Remember window size and position
         self._persistMgr = wx.lib.agw.persist.PersistenceManager.Get()
