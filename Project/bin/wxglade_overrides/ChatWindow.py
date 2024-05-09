@@ -93,7 +93,6 @@ class MyFrame(ChatWindow):
         self.Bind(wx.EVT_TIMER, self.ClearTyping, self.timer_typing)
         self.timer_connection.Start(1000)  # Start checking connection
 
-
         # Variables
         self.temp_file = None
         self.sha_github = None

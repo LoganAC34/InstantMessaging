@@ -1,3 +1,10 @@
+v2.4.5 - Patch Release
+ - Fixed typing indicator background color.
+
+v2.4.4 - Minor Release
+ - Increased the character count for usernames to 20 (previously 15).
+ - Now checks for connection status all the time.
+
 v2.4.0 - Patch Release
  - Added more good and bad fortunes.
  - Added the ability to leave comments in fortune files like in python with "#".
