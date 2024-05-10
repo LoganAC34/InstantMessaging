@@ -135,7 +135,7 @@ chatHistory = []  # Initialize chat history
 chatHistory_names = []  # Initialize chat history
 loop_wait = 0.001
 u_separator = '?>:'
-icon = exe + 'Local_Instant_Messenger.ico'
+icon = 'Local_Instant_Messenger.ico'
 key = b'zBfp5pkJ_-UniuIQI0dzMuf3mTIm6DRkpURXoZpA-Yo='
 cipher_key = Fernet(key)
 

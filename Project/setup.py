@@ -32,7 +32,7 @@ PyInstaller.__main__.run([
     '--distpath', dir_PyCharm,
     '-F',
     '--noconsole',
-    '--icon', os.path.join(dir_path, 'Local_Instant_Messenger.ico'),
+    '--icon', os.path.join(dir_path, 'Resources', 'Local_Instant_Messenger.ico'),
     '--hidden-import', 'wx.adv',
     '--hidden-import', 'wx.xml',
     '--add-data', f'../0 - Bin/venv/Lib/site-packages/enchant;./enchant',  # Otherwise enchant errors
