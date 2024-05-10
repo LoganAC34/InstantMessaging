@@ -32,16 +32,17 @@ class GlobalVars(object):
         # noinspection PyProtectedMember
         exe = sys._MEIPASS + '\\'
         app_path = sys.executable
+        my_data_dir = pathlib.Path.home() / 'AppData/Roaming' / "Local_Instant_Messenger"
         debug = False
     else:
         # we are running in a normal Python environment
         print('Not frozen')
         exe = os.path.abspath('./') + '\\'
         app_path = os.path.abspath('../../Testing/Local_Instant_Messenger.exe')
+        my_data_dir = pathlib.Path(os.path.abspath('../Testing/Local_Instant_Messenger'))
         debug = True
 
     # Home directory
-    my_data_dir = pathlib.Path.home() / 'AppData/Roaming' / "Local_Instant_Messenger"
     if not os.path.isdir(my_data_dir):
         my_data_dir.mkdir(parents=True)
 
@@ -49,6 +50,7 @@ class GlobalVars(object):
     pkl_sha = my_data_dir / 'sha.pkl'
     pkl_update = my_data_dir / 'update.pkl'
     plk_IP = my_data_dir / 'ip.pkl'
+    lockfile = my_data_dir / 'program.lock'
 
     # Global Variables
     icon = os.path.join(exe, 'Resources', 'Local_Instant_Messenger.ico')
