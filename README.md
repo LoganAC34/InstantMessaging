@@ -23,4 +23,5 @@ Local Instant Messenger is a Python application designed for communication betwe
 ### Contribution
 Contributions to Local Instant Messenger are welcome! If you have any ideas for improvements or new features, feel free to submit a pull request or open an issue on GitHub.
 
+### License
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/LoganAC34/InstantMessaging/blob/master/LICENSE]) file for details.
