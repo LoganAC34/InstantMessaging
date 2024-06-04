@@ -52,7 +52,6 @@ class MyFrame(ChatWindow):
         self.SetTitle(f"Chat Window - {GlobalVars.version_number}")
 
         # Variables
-        self.maxChar = 256
         self.sent_to = ''
         self.ClearedChat = False
         self.previous_sender = None
@@ -101,6 +100,17 @@ class MyFrame(ChatWindow):
         FileDrTr = MyFileDropTarget(self)
         self.text_ctrl_message.SetDropTarget(FileDrTr)
         self.Bind(EVT_DROP_EVENT, self.LabelTextUpdate)
+
+        # On minimize and restore
+        self.Bind(wx.EVT_ACTIVATE, self.OnResize)
+
+        # character status flashing timer
+        self.flash_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.on_timer_character_status, self.flash_timer)
+        self.flashing = False
+        self.original_color = self.StatusCharacters.GetForegroundColour()
+        self.flash_count = 0
+        self.flash_count_max = 12
 
     def LabelTextUpdate(self, event):
         image_path = event.data
@@ -161,14 +171,44 @@ class MyFrame(ChatWindow):
         self.UserNameWidth = self.UserNameWidth_Default
 
     def SendMessage(self, event):
+        self.CheckConnection(self)
         message = self.text_ctrl_message.GetValue()
-        self.UpdateStatus('characters', 0)
-        if message:
+        if message and len(message) <= GlobalVars.maxCharacterLength:
             PC_Local_Name = Config.get_user_info('alias', 'local')
             self.AppendMessage(PC_Local_Name, message)
             server.send_message(PC_Local_Name, message)
             self.text_ctrl_message.ClearAll()
+            self.UpdateStatus('characters', 0)
             wx.CallAfter(self.CheckConnection_Stop, event)
+        elif len(message) > GlobalVars.maxCharacterLength:
+            self.on_start_character_flashing(event)
+
+    def on_start_character_flashing(self, event):
+        if not self.flashing:
+            self.flashing = True
+            self.flash_timer.Start(300)  # Flash every 500 milliseconds
+
+    def on_stop_character_flashing(self, event):
+        if self.flashing:
+            self.flash_timer.Stop()
+            self.flashing = False
+            self.flash_count = 0
+            # Revert to original style when stopping
+            self.StatusCharacters.SetForegroundColour(self.original_color)
+            self.StatusCharacters.Refresh()
+
+    def on_timer_character_status(self, event):
+        current_color = self.StatusCharacters.GetForegroundColour()
+
+        if self.flash_count == self.flash_count_max:
+            self.on_stop_character_flashing(self)
+        else:
+            if current_color == self.original_color:
+                self.StatusCharacters.SetForegroundColour(wx.Colour(255, 0, 0))
+            else:
+                self.StatusCharacters.SetForegroundColour(self.original_color)
+
+            self.flash_count += 1
 
     @staticmethod
     def CheckConnection(self):
@@ -181,9 +221,22 @@ class MyFrame(ChatWindow):
         pass
 
     def OnResize(self, event):
-        self.panel_chat_log.Scroll(0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))
         if event:
             event.Skip()
+
+        """self.Refresh()
+        self.Update()
+        self.Layout()  # Causing issues with message box geting resized"""
+
+        self.panel_send.SetAutoLayout(True)
+        self.panel_send.Refresh()
+        self.panel_send.Update()
+        self.panel_send.Layout()
+
+        self.panel_chat_log.SetAutoLayout(True)
+        self.panel_chat_log.Refresh()
+        self.panel_chat_log.Update()
+        self.panel_chat_log.Layout()
 
     def OnClose(self, event):
         # self.queue_to_server.put("Command:Shutdown")
@@ -241,13 +294,16 @@ class MyFrame(ChatWindow):
                 self.StatusDevice.SetLabel(status[1])
                 if status[2] == 'app':
                     self.StatusConnected.SetForegroundColour((0, 255, 0))
+                    GlobalVars.maxCharacterLength = 1000
                 else:
                     self.StatusConnected.SetForegroundColour((225, 0, 0))
+                    GlobalVars.maxCharacterLength = 256
             self.Refresh()
 
         if element == 'characters':
             self.characters = str(status)
-            self.StatusCharacters.SetLabel(f'{self.characters}/{self.maxChar} characters')
+        self.StatusCharacters.SetLabel(f'{self.characters}/{GlobalVars.maxCharacterLength} characters')
+        self.OnResize(None)
 
         # print("Event handler 'UpdateStatus' not implemented!")
 
@@ -312,6 +368,8 @@ class MyFrame(ChatWindow):
         self.panel_chat_window.Layout()
         self.panel_chat_log.Layout()
         self.panel_chat_log.FitInside()
+
+        wx.CallAfter(self.panel_chat_log.Scroll, 0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))
         wx.CallAfter(self.OnResize, None)
 
     def EasterEgg(self, event):

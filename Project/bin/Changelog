@@ -1,3 +1,8 @@
+v2.4.6 - Minor Release
+ - Added functionality to be able to sent longer messages when connected app to app (1000 characters)
+ - Character total now flashes red when you hit the character limit
+ - Fixed blank space being added to bottom of chat log when receiving messages when window is minimized.
+
 v2.4.5 - Patch Release
  - Fixed typing indicator background color.
 
