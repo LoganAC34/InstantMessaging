@@ -1,4 +1,5 @@
 import json
+import queue
 import socket
 import subprocess
 import threading
@@ -33,7 +34,7 @@ class SocketWorkerThread(threading.Thread):
         self.cipher_key = Fernet(key)
 
         # Start server
-        self.out_data = None
+        self.out_data_queue = queue.Queue()
         self.in_data = None
         self.queue_from_app = queue_from_app
         self.queue_to_app = queue_to_app
@@ -56,16 +57,17 @@ class SocketWorkerThread(threading.Thread):
             current_time = datetime.now()
             current_time_formatted = f"{current_time.hour}:{current_time.minute}:{current_time.second}:{current_time.microsecond}"
 
-            if self.out_data:
+            if self.out_data_queue.not_empty:
                 # data = {'user': self._user, 'message': self._msg}
                 # {'function': 'message', 'args': {'user': user, 'message': msg}}
-                function = self.out_data['function']
-                encrypted_msg = self.cipher_key.encrypt(json.dumps(self.out_data).encode())  # Encrypt message
+                out_data = self.out_data_queue.get()
+                function = out_data['function']
+                encrypted_msg = self.cipher_key.encrypt(json.dumps(out_data).encode())  # Encrypt message
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
                 if function == 'message':
                     print("Sending message to " + self.remote_host + ":" + str(send_port))
-                    print(self.out_data['args']['message'])
+                    print(out_data['args']['message'])
                 elif function == 'status':
                     print(f"Testing connection to {self.remote_host}:{str(send_port)} [{current_time_formatted}]")
                 elif function == 'typing':
@@ -80,7 +82,7 @@ class SocketWorkerThread(threading.Thread):
                 except TimeoutError:
                     via = 'Windows popup'
                     if function == 'message':
-                        args = self.out_data['args']
+                        args = out_data['args']
                         user = args['user']
                         msg = args['message']
                         batchMessage = f'{user}: {msg}'
@@ -94,12 +96,19 @@ class SocketWorkerThread(threading.Thread):
                 out = {'function': 'status', 'args': [action, self.remote_host, via]}
                 self.queue_to_app.put(out)
 
-            self.out_data = None
-
     def run_server(self, host, port):
         # Handle all incoming connections by spawning worker threads.
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind((host, port))
+        print("Trying to connect...")
+        connected = False
+        while not connected:
+            try:
+                server.bind((host, port))
+                connected = True
+            except OSError:
+                print("Error connecting!")
+                time.sleep(5)
+                print("Retrying to connect...")
         print("Bind successful: " + host)
         server.listen(5)
 
@@ -115,7 +124,6 @@ class SocketWorkerThread(threading.Thread):
 
         msg = client.recv(1024).decode("UTF-8")
         decrypted_msg = self.cipher_key.decrypt(msg).decode("UTF-8")  # Decrypt message
-        # print(decrypted_msg)
         data = json.loads(decrypted_msg)
 
         function = data['function']
@@ -130,19 +138,20 @@ class SocketWorkerThread(threading.Thread):
         self.queue_to_app.put(data)
 
     def send_message(self, user, msg):
-        self.out_data = {'function': 'message', 'args': {'user': user, 'message': msg}}
+        self.out_data_queue.put({'function': 'message', 'args': {'user': user, 'message': msg}})
+        time.sleep(0.01)
         # print("Event triggered")
-        # print(self.out_data)
+        # print(self.out_data_queue)
 
     def connection_status(self, user=None):
-        self.out_data = {'function': 'status', 'args': user}
+        self.out_data_queue.put({'function': 'status', 'args': user})
         # print("Event triggered")
-        # print(self.out_data)
+        # print(self.out_data_queue)
 
     def typing(self, user):
-        self.out_data = {'function': 'typing', 'args': user}
+        self.out_data_queue.put({'function': 'typing', 'args': user})
         # print("Event triggered")
-        # print(self.out_data)
+        # print(self.out_data_queue)
 
     def update_variables(self):
         self.remote_host = Config.get_user_info('device_name', 'remote')

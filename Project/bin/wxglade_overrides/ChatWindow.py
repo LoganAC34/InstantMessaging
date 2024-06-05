@@ -175,8 +175,8 @@ class MyFrame(ChatWindow):
         message = self.text_ctrl_message.GetValue()
         if message and len(message) <= GlobalVars.maxCharacterLength:
             PC_Local_Name = Config.get_user_info('alias', 'local')
-            self.AppendMessage(PC_Local_Name, message)
             server.send_message(PC_Local_Name, message)
+            self.AppendMessage(PC_Local_Name, message)
             self.text_ctrl_message.ClearAll()
             self.UpdateStatus('characters', 0)
             wx.CallAfter(self.CheckConnection_Stop, event)
@@ -226,7 +226,7 @@ class MyFrame(ChatWindow):
 
         """self.Refresh()
         self.Update()
-        self.Layout()  # Causing issues with message box geting resized"""
+        self.Layout()  # Causing issues with message box getting resized"""
 
         self.panel_send.SetAutoLayout(True)
         self.panel_send.Refresh()

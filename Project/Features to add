@@ -3,3 +3,5 @@ Fix links
 Easter Egg
 Changelog
 Add theming
+Add message echo where the other party verifies the message was sent.
+Also, more feedback on if there is error. Maybe somehow make a log you can look at.
