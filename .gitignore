@@ -1,3 +1,6 @@
+.idea/shelf/
+.idea/workspace.xml
+.idea/usage.statistics.xml
 .venv
 build
 */Testing/*
