@@ -5,12 +5,12 @@ import sys
 
 
 class GlobalVars(object):
-    # TODO(update version number)
-    # TODO(Update changelog)
+    # TODO: update version number
+    # Update changelog!!!
     # MAJOR version when you make incompatible API changes
     # MINOR version when you add functionality in a backwards compatible manner
     # PATCH version when you make backwards compatible bug fixes
-    version_number = 'v3.0.0'
+    version_number = 'v3.0.1'
 
     # Relative and exe paths
     # Get exe location

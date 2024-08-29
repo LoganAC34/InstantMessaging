@@ -1,3 +1,8 @@
+# TODO: Update changelog
+
+v.3.0.1 - Bug Fix
+ - Fixed updated check and download to be more reliable.
+
 v3.0.0 - Major Release
  - Added framework for custom color themes.
  - Restructured chat log. Username is above message now so it no longer pushes messages based on username size.

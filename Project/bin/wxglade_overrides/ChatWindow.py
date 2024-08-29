@@ -282,8 +282,7 @@ class MyFrame(ChatWindow):
         event.Skip()
 
     def OnOpen(self, event):
-        if not GlobalVars.debug:
-            self.CheckForUpdate()
+        self.CheckForAndDownloadUpdate()
         event.Skip()
 
     def UpdateStatus(self, element, status):
@@ -410,48 +409,30 @@ class MyFrame(ChatWindow):
                 fortune_type = 'Bad'
         read_fortune(fortune_type)
 
-    def CheckForUpdate(self):
-        try:
-            # Get GitHub sha value:
-            url_sha = 'https://api.github.com/repos/LoganAC34/InstantMessaging/contents/Local_Instant_Messenger.exe'
-            session = requests.Session()
-            sha_github = session.get(url_sha, timeout=1).json()
-            self.sha_github = sha_github['sha']
+    def CheckForAndDownloadUpdate(self):
+        url_repo = 'https://api.github.com/repos/LoganAC34/InstantMessaging/releases/latest'
+        response_data = requests.get(url_repo).json()
+        version_name = response_data['name']
+        version_number = response_data['tag_name']
+        url_download = response_data['assets'][0]['browser_download_url']
 
-            # Get local file sha value:
-            if exists(GlobalVars.pkl_sha):
-                with open(GlobalVars.pkl_sha, 'rb') as f:
-                    sha_local = pickle.load(f)
-            else:
-                sha_local = "None"
-                print("No local sha value")
+        print("Current version: " + GlobalVars.version_number)
+        print("Repo version: " + version_name)
 
-            print("Github sha: " + self.sha_github)
-            print("Local sha: " + sha_local)
+        if GlobalVars.version_number != version_number and 'Stable' in version_name and not GlobalVars.debug:
+            self.temp_file = os.path.join(tempfile.gettempdir(), os.path.basename(url_download))
 
-            if self.sha_github != sha_local:
+            # Set Update variable to True
+            with open(GlobalVars.pkl_update, 'wb') as f:
+                pickle.dump(True, f)
 
-                # Download GitHub file
-                url_download = 'https://raw.githubusercontent.com/LoganAC34/' \
-                               'InstantMessaging/master/Local_Instant_Messenger.exe'
-                self.temp_file = os.path.join(tempfile.gettempdir(), os.path.basename(url_download))
-                print(self.temp_file)
+            # Download file
+            t = threading.Thread(target=self.DownloadUpdate, args=[url_download, self.temp_file])
+            t.daemon = True
+            t.start()
 
-                # Set Update variable to True
-                with open(GlobalVars.pkl_update, 'wb') as f:
-                    pickle.dump(True, f)
-
-                # Download file
-                t = threading.Thread(target=self.DownloadUpdate, args=[url_download, self.temp_file])
-                t.daemon = True
-                t.start()
-
-            else:
-                print("Program is up to date!")
-
-        except Exception as e:
-            print(e)
-            pass
+        else:
+            print("Program is up to date!")
 
     @staticmethod
     def DownloadUpdate(url_download, temp_file):
