@@ -1,3 +1,5 @@
-/build/
-/Backup/
-**/__pycache__/
+.venv
+build
+*/Testing/*
+*/Local_Instant_Messenger.exe
+/Project/Testing/

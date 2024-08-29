@@ -1,6 +1,7 @@
 import json
 import queue
 import socket
+import struct
 import subprocess
 import threading
 import time
@@ -17,7 +18,7 @@ class SocketWorkerThread(threading.Thread):
     """Worker Thread Class."""
     print("Server Started")
 
-    def __init__(self, queue_from_app, queue_to_app):
+    def __init__(self, queue_server_and_app):
         """Init Worker Thread Class."""
         threading.Thread.__init__(self)
 
@@ -36,8 +37,7 @@ class SocketWorkerThread(threading.Thread):
         # Start server
         self.out_data_queue = queue.Queue()
         self.in_data = None
-        self.queue_from_app = queue_from_app
-        self.queue_to_app = queue_to_app
+        self.queue_server_and_app = queue_server_and_app
         self.daemon = True
 
     def start_server(self):
@@ -55,14 +55,15 @@ class SocketWorkerThread(threading.Thread):
         while True:
             time.sleep(0.01)
             current_time = datetime.now()
-            current_time_formatted = f"{current_time.hour}:{current_time.minute}:{current_time.second}:{current_time.microsecond}"
+            current_time_formatted = (f"{current_time.hour}:{current_time.minute}:"
+                                      f"{current_time.second}:{current_time.microsecond}")
 
             if self.out_data_queue.not_empty:
                 # data = {'user': self._user, 'message': self._msg}
                 # {'function': 'message', 'args': {'user': user, 'message': msg}}
                 out_data = self.out_data_queue.get()
                 function = out_data['function']
-                encrypted_msg = self.cipher_key.encrypt(json.dumps(out_data).encode())  # Encrypt message
+                encrypted_msg = self.cipher_key.encrypt(json.dumps(out_data).encode("UTF-8"))  # Encrypt message
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
                 if function == 'message':
@@ -76,7 +77,9 @@ class SocketWorkerThread(threading.Thread):
                 try:
                     client.settimeout(0.1)
                     client.connect((self.remote_host, send_port))
-                    client.send(encrypted_msg)
+                    encrypted_msg = struct.pack('>I', len(encrypted_msg)) + encrypted_msg
+                    client.sendall(encrypted_msg)
+                    # client.send(encrypted_msg)
                     via = 'app'
 
                 except TimeoutError:
@@ -94,7 +97,7 @@ class SocketWorkerThread(threading.Thread):
                 if function == 'message':
                     action = 'Sent'
                 out = {'function': 'status', 'args': [action, self.remote_host, via]}
-                self.queue_to_app.put(out)
+                self.queue_server_and_app.put(out)
 
     def run_server(self, host, port):
         # Handle all incoming connections by spawning worker threads.
@@ -119,10 +122,33 @@ class SocketWorkerThread(threading.Thread):
             t.start()
 
     def handle_connection(self, client, address):
+        def recvall(sock, n):
+            # Helper function to recv n bytes or return None if EOF is hit
+            data = bytearray()
+            while len(data) < n:
+                packet = sock.recv(n - len(data))
+                if not packet:
+                    return None
+                data.extend(packet)
+            return data
+
+        def recv_msg(sock):
+            # Read message length and unpack it into an integer
+            raw_msglen = recvall(sock, 4)
+            if not raw_msglen:
+                return None
+            msglen = struct.unpack('>I', raw_msglen)[0]
+            # Read the message data
+            return recvall(sock, msglen).decode("UTF-8")
+
         print("Client accepted from", address)
         client.settimeout(0.1)
 
-        msg = client.recv(1024).decode("UTF-8")
+        try:
+            # msg = client.recv(1024).decode("UTF-8")
+            msg = recv_msg(client)
+        except TimeoutError:
+            return
         decrypted_msg = self.cipher_key.decrypt(msg).decode("UTF-8")  # Decrypt message
         data = json.loads(decrypted_msg)
 
@@ -135,7 +161,7 @@ class SocketWorkerThread(threading.Thread):
         elif function == 'status':
             return
 
-        self.queue_to_app.put(data)
+        self.queue_server_and_app.put(data)
 
     def send_message(self, user, msg):
         self.out_data_queue.put({'function': 'message', 'args': {'user': user, 'message': msg}})

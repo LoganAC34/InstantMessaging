@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 
 import PyInstaller.__main__
 
@@ -35,7 +36,7 @@ PyInstaller.__main__.run([
     '--icon', os.path.join(dir_path, 'Resources', 'Local_Instant_Messenger.ico'),
     '--hidden-import', 'wx.adv',
     '--hidden-import', 'wx.xml',
-    '--add-data', f'../0 - Bin/venv/Lib/site-packages/enchant;./enchant',  # Otherwise enchant errors
+    '--add-data', f'{sys.prefix}/Lib/site-packages/enchant;./enchant',  # Otherwise enchant errors
     # '--debug=imports',
     '--add-data', rf'{dst};.'
 ])

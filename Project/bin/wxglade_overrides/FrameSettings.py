@@ -11,12 +11,14 @@ from Project.bin.Scripts import Config
 from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.wxglade.SettingsWindow import *
 from Project.bin.wxglade_overrides import ChatWindow
+from Project.bin.wxglade_overrides import EditColors
 from Project.bin.wxglade_overrides import WarningMessage
 
 
 class FrameSettings(SettingsWindow):
     def __init__(self, *args, **kwds):
         SettingsWindow.__init__(self, *args, **kwds)
+        self.EditColors = None
         self.WarningMessage = None
         self.server = ChatWindow.server
         self.SetIcon(wx.Icon(GlobalVars.icon))
@@ -40,6 +42,15 @@ class FrameSettings(SettingsWindow):
         num = list(range(1, users + 1))
         for x in num:
             self.AddUser_UI(x)
+
+    def On_EditColors(self, event):  # wxGlade: SettingsWindow.<event_handler>
+        print("Event handler 'On_EditColors' not implemented!")
+        if not self.EditColors:
+            self.EditColors = EditColors.FrameEditColors(self)
+            self.EditColors.CentreOnParent()
+            self.Disable()
+            self.EditColors.Show()
+            event.Skip()
 
     def OnChar(self, event):
         key_code = event.GetKeyCode()
@@ -195,7 +206,7 @@ class FrameSettings(SettingsWindow):
                 Config.set_user_info('override', user_Override, 'remote', x)
                 print(f'REMOTE_USER_{x} | {user_DeviceName} | {user_Alias} | {str(user_Override)}')
 
-            GlobalVars.queue_from_server.put({'function': 'update_variables', 'args': ''})
+            GlobalVars.queue_server_and_app.put({'function': 'update_variables', 'args': ''})
             self.OnClose()
         else:
             print("Not good")

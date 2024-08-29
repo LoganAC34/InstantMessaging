@@ -28,8 +28,7 @@ from Project.bin.wxglade_overrides import FrameSettings
 drop_event, EVT_DROP_EVENT = wx.lib.newevent.NewEvent()
 
 # Server
-server = SocketWorkerThread(GlobalVars.queue_from_server, GlobalVars.queue_from_server)
-
+server = SocketWorkerThread(GlobalVars.queue_server_and_app)
 
 class MyFileDropTarget(wx.FileDropTarget):
     def __init__(self, obj):
@@ -53,7 +52,6 @@ class MyFrame(ChatWindow):
 
         # Variables
         self.sent_to = ''
-        self.ClearedChat = False
         self.previous_sender = None
         self.SettingsWindow = None
         self.EasterEggWindow = None
@@ -71,12 +69,12 @@ class MyFrame(ChatWindow):
         if not self._persistMgr.RegisterAndRestoreAll(self):
             print("No config file")
 
-        # Create config file if one doesn't exist
+        # Create a config file if one doesn't exist
         if not os.path.exists(GlobalVars.cfgFile_path):
             Config.create_template()
 
         # Server - Check for messages
-        self.queue_from_server = GlobalVars.queue_from_server
+        self.queue_server_and_app = GlobalVars.queue_server_and_app
         server.start_server()
         self.timer_messages = wx.Timer(self)
         self.timer_messages.Start(100)
@@ -129,7 +127,8 @@ class MyFrame(ChatWindow):
     def HandleServer(self, event):
         data = {}
         try:
-            data = self.queue_from_server.get(False)
+            data = self.queue_server_and_app.get_nowait()
+            print(data)
         except queue.Empty:
             pass
 
@@ -165,7 +164,7 @@ class MyFrame(ChatWindow):
 
     def ClearChat(self, event):
         self.sizer_1.Clear(True)
-        self.ClearedChat = True
+        self.previous_sender = None
         self.panel_chat_log.Scroll(0, 0)
         self.panel_chat_log.FitInside()
         self.UserNameWidth = self.UserNameWidth_Default
@@ -240,7 +239,6 @@ class MyFrame(ChatWindow):
 
     def OnClose(self, event):
         # self.queue_to_server.put("Command:Shutdown")
-        # print("Event handler 'OnClose' not implemented!")
         self._persistMgr.SaveAndUnregister()
 
         # Get Update variable
@@ -325,43 +323,35 @@ class MyFrame(ChatWindow):
         self.panel_chat_log.Scroll(0, scroll_pos)
 
     def AppendMessage(self, username, message):
-        if username == self.previous_sender and self.ClearedChat is False:
-            username = ""
-        else:
-            self.previous_sender = username
-            username = f"{username}: "
-        self.ClearedChat = False
-
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.sizer_1.Add(sizer, flag=wx.TOP | wx.EXPAND)
-
-        text_ctrl_username = wx.TextCtrl(self.panel_chat_log, wx.ID_ANY, username,
-                                         style=wx.BORDER_NONE | wx.TE_READONLY | wx.TE_LEFT)
-
-        # Get text height and width
         font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False)
-        height = font.GetPixelSize().Height * 1.5
-        text_ctrl_username.SetFont(font)
-        width = text_ctrl_username.GetTextExtent(username).Width + 10
-        if width > self.UserNameWidth:
-            self.UserNameWidth = width
-
         color_background = wx.Colour(0, 0, 0)
         color_text = wx.Colour(255, 255, 255)
 
-        text_ctrl_username.SetMinSize((self.UserNameWidth, height))
-        sizer.Add(text_ctrl_username, 0, wx.LEFT, 3)
-        text_ctrl_username.SetBackgroundColour(color_background)
-        text_ctrl_username.SetForegroundColour(color_text)
+        # Add username
+        if username != self.previous_sender:
+            self.previous_sender = username
+            username = f"{username}: "
 
+            text_ctrl_username = wx.TextCtrl(self.panel_chat_log, wx.ID_ANY, username,
+                                             style=wx.BORDER_NONE | wx.TE_READONLY | wx.TE_LEFT)
+            text_ctrl_username.SetFont(font)
+            text_ctrl_username.SetBackgroundColour(color_background)
+            text_ctrl_username.SetForegroundColour(color_text)
+            self.sizer_1.Add(text_ctrl_username, 0, wx.EXPAND | wx.LEFT, 3)
+
+            text_ctrl_username.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseEvents)
+
+        # Add message body
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
         style = wx.BORDER_NONE | wx.TE_MULTILINE | wx.TE_NO_VSCROLL | wx.TE_READONLY | wx.TE_AUTO_URL
         text_ctrl_message = ExpandoTextCtrl(self.panel_chat_log, wx.ID_ANY, message, style=style)
-        sizer.Add(text_ctrl_message, 1, wx.ALL, 0)
         text_ctrl_message.SetFont(font)
         text_ctrl_message.SetBackgroundColour(color_background)
         text_ctrl_message.SetForegroundColour(color_text)
+        sizer.Add((0, 0), 0, wx.LEFT, 30)
+        sizer.Add(text_ctrl_message, 1, wx.TOP, 3)
+        self.sizer_1.Add(sizer, flag=wx.TOP | wx.EXPAND)
 
-        text_ctrl_username.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseEvents)
         text_ctrl_message.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseEvents)
 
         self.splitter_window.Layout()
@@ -474,7 +464,7 @@ class MyFrame(ChatWindow):
         update_popup.SetIcon(update_popup_icon)
         update_popup.Show()
 
-        # Download current file
+        # Download the current file
         while True:
             try:
                 temp = SpooledTemporaryFile()

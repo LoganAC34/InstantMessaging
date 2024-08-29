@@ -10,21 +10,9 @@ class GlobalVars(object):
     # MAJOR version when you make incompatible API changes
     # MINOR version when you add functionality in a backwards compatible manner
     # PATCH version when you make backwards compatible bug fixes
-    version_number = 'v2.4.7'
+    version_number = 'v3.0.0'
 
     # Relative and exe paths
-    """
-    try:
-        # we are running in a bundle
-        # noinspection PyProtectedMember
-        exe = sys._MEIPASS + '\\'
-        relative = os.path.dirname(sys.executable) + '\\'
-    except AttributeError:
-        # we are running in a normal Python environment
-        exe = os.path.dirname(os.path.abspath(__file__)) + '\\'
-        relative = '\\'.join(exe.split('\\')[:-2]) + '\\'
-    """
-
     # Get exe location
     if getattr(sys, 'frozen', False):
         # we are running in a bundle
@@ -63,5 +51,4 @@ class GlobalVars(object):
     pwl_path = os.path.join(my_data_dir, 'user_dictionary.txt')  # Personal dictionary
 
     # Server
-    queue_to_server = queue.Queue()
-    queue_from_server = queue.Queue()
+    queue_server_and_app = queue.Queue()
