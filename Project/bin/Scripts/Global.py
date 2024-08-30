@@ -52,3 +52,8 @@ class GlobalVars(object):
 
     # Server
     queue_server_and_app = queue.Queue()
+
+    # Chat log HTML template
+    edge_webview_installer = os.path.join(exe, 'Resources', 'MicrosoftEdgeWebview2Setup.exe')
+    html_template_path = r'C:\Users\lcarrozza\PycharmProjects\LocalInstantMessenger\Project\bin\Resources\message_log_template.html'
+    html_template_code = open(html_template_path).read()

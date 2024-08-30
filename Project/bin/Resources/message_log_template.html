@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            background-color: #121212;
+            overflow-y: scroll;
+        }
+        .message {
+            margin-left: 15px;
+            margin-bottom: 10px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            padding-left: 3px;
+            padding-right: 3px;
+            /* copying https://lh3.googleusercontent.com/2dBw3e0xPpK37MzJ9pci2OySJiHhQCNY1RIHAYkJ5PBbBzApRNkbOgV0RCzsJw0VOOiiBxyoIc_QhbRxGiTw-DgHVc1-_NWaFJ0C=w1064-v0 */
+            color: #e3e3e3; /* text color light gray */
+            background-color: #1d1d1d; /* dark gray */
+            border: 1px solid #434343; /* lighter dark gray */
+            border-radius: 4px;
+            width: auto;
+            word-wrap: break-word;
+        }
+        .message p {
+            margin: 0; /* Reset paragraph margin */
+        }
+        .username {
+            font-weight: normal;
+            margin-bottom: 3px;
+        }
+        .local-user {
+            color: #e3e3e3;
+        }
+        .remote-user {
+            color: #e3e3e3;
+        }
+    </style>
+    <script>
+        // mouse and keyboard events
+        document.addEventListener('keydown', function(event) {
+            window.wx_msg.postMessage({keyPress: event.key})
+        });
+        document.addEventListener('mousedown', function(event) {
+            window.wx_msg.postMessage({mouseDown: event.button})
+        });
+        document.addEventListener('wheel', function(event) {
+            window.wx_msg.postMessage({wheel: event.deltaY})
+        });
+
+        // insert new message
+        window.insertMessage = function(message) {
+            var isScrolledToBottom = checkScrolledToBottom();
+            var message_div = document.createElement('div');
+            message_div.className = 'message';
+            var message_p = document.createElement('p');
+            message_p.innerText = message;
+            message_div.appendChild(message_p);
+            document.body.appendChild(message_div);
+            scrollToBottom(isScrolledToBottom);
+        }
+
+        // insert new username
+        window.insertUsername = function(username, user_type) {
+            var isScrolledToBottom = checkScrolledToBottom();
+            var username_div = document.createElement('div');
+            username_div.className = 'username ' + user_type;
+            username_div.innerText = username + ': ';
+            document.body.appendChild(username_div);
+            scrollToBottom(isScrolledToBottom);
+        }
+
+        function checkScrolledToBottom() {
+            if ((window.innerHeight + Math.round(window.scrollY)) >= document.body.offsetHeight) {
+                return "true";
+            }
+                return "false";
+        }
+
+        function scrollToBottom(isScrolledToBottom) {
+            if (isScrolledToBottom == "true") {
+                // scroll to the bottom again
+                window.scrollTo(0, document.body.scrollHeight)
+            }
+        }
+
+        // disable back button
+        history.pushState(null, null, null);
+        window.addEventListener('popstate', function(event) {
+            history.pushState(null, null, null);
+        });
+    </script>
+</head>
+<body oncontextmenu="return false;">
+
+<!-- Message template
+<div class="username {local/remote-user}">{User Name}</div>
+<div class="message"><p>{message}</p></div> -->
+
+</body>
+</html>

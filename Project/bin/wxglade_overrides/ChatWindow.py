@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+import html
+import json
 import os
 import pickle
 import queue
@@ -13,13 +15,12 @@ from tempfile import SpooledTemporaryFile
 
 import requests
 import wx.adv
+import wx.html2
 import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
-from wx.lib.expando import ExpandoTextCtrl
 
 from Project.bin.Scripts import Config
-from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.Scripts.Server import SocketWorkerThread
 from Project.bin.wxglade.ChatWindow import *
 from Project.bin.wxglade_overrides import EasterEgg
@@ -304,62 +305,31 @@ class MyFrame(ChatWindow):
 
         # print("Event handler 'UpdateStatus' not implemented!")
 
-    def OnMouseEvents(self, event):
-        # print("Event handler 'OnMouseEvents' not implemented!")
-        wheel_direction = event.GetWheelRotation()
-        scroll_pos = self.panel_chat_log.GetScrollPos(wx.VERTICAL)
-        scroll_rate = 15
-        if wheel_direction > 0:
-            if scroll_pos < scroll_rate:
-                # print("Scroll top")
-                scroll_pos = 0
-            else:
-                # print("Scroll up")
-                scroll_pos -= scroll_rate
-        else:
-            # print("Scroll down")
-            scroll_pos += scroll_rate
-        self.panel_chat_log.Scroll(0, scroll_pos)
+    def on_script_message(self, event):
+        data = json.loads(event.String)
+        print(data)
+
+        if 'keyPress' in data:
+            print(data['keyPress'])
+        elif 'mouseDown' in data:
+            print(data['mouseDown'])
+        elif 'wheel' in data:
+            print(data['wheel'])
 
     def AppendMessage(self, username, message):
-        font = wx.Font(10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False)
-        color_background = wx.Colour(0, 0, 0)
-        color_text = wx.Colour(255, 255, 255)
+        def test(username, message):
+            if username != self.previous_sender:
+                self.previous_sender = username
+                user_type = 'local-user'
+                username = html.escape(username)
+                self.html_chat_log.RunScript(f'window.insertUsername("{username}", "{user_type}")')
 
-        # Add username
-        if username != self.previous_sender:
-            self.previous_sender = username
-            username = f"{username}: "
+            message = html.escape(message)
+            self.html_chat_log.RunScript(f'window.insertMessage({json.dumps(message)})')
 
-            text_ctrl_username = wx.TextCtrl(self.panel_chat_log, wx.ID_ANY, username,
-                                             style=wx.BORDER_NONE | wx.TE_READONLY | wx.TE_LEFT)
-            text_ctrl_username.SetFont(font)
-            text_ctrl_username.SetBackgroundColour(color_background)
-            text_ctrl_username.SetForegroundColour(color_text)
-            self.sizer_1.Add(text_ctrl_username, 0, wx.EXPAND | wx.LEFT, 3)
+        test(username, message)
+        return
 
-            text_ctrl_username.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseEvents)
-
-        # Add message body
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        style = wx.BORDER_NONE | wx.TE_MULTILINE | wx.TE_NO_VSCROLL | wx.TE_READONLY | wx.TE_AUTO_URL
-        text_ctrl_message = ExpandoTextCtrl(self.panel_chat_log, wx.ID_ANY, message, style=style)
-        text_ctrl_message.SetFont(font)
-        text_ctrl_message.SetBackgroundColour(color_background)
-        text_ctrl_message.SetForegroundColour(color_text)
-        sizer.Add((0, 0), 0, wx.LEFT, 30)
-        sizer.Add(text_ctrl_message, 1, wx.TOP, 3)
-        self.sizer_1.Add(sizer, flag=wx.TOP | wx.EXPAND)
-
-        text_ctrl_message.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseEvents)
-
-        self.splitter_window.Layout()
-        self.panel_chat_window.Layout()
-        self.panel_chat_log.Layout()
-        self.panel_chat_log.FitInside()
-
-        wx.CallAfter(self.panel_chat_log.Scroll, 0, self.panel_chat_log.GetScrollRange(wx.VERTICAL))
-        wx.CallAfter(self.OnResize, None)
 
     def EasterEgg(self, event):
         if GlobalVars.debug and not self.EasterEggWindow:
