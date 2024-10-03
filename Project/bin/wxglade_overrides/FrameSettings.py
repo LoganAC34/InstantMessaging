@@ -11,7 +11,6 @@ from Project.bin.Scripts import Config
 from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.wxglade.SettingsWindow import *
 from Project.bin.wxglade_overrides import ChatWindow
-from Project.bin.wxglade_overrides import EditColors
 from Project.bin.wxglade_overrides import WarningMessage
 
 
@@ -46,12 +45,14 @@ class FrameSettings(SettingsWindow):
     def On_EditColors(self, event):  # wxGlade: SettingsWindow.<event_handler>
         print("Event handler 'On_EditColors' not implemented!")
         pass  # TODO: implement this
+        """
         if not self.EditColors:
             self.EditColors = EditColors.FrameEditColors(self)
             self.EditColors.CentreOnParent()
             self.Disable()
             self.EditColors.Show()
             event.Skip()
+        """
 
     def OnChar(self, event):
         key_code = event.GetKeyCode()

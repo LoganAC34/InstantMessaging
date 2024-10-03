@@ -83,8 +83,8 @@ class MyApp(wx.App):
         if os.path.exists(GlobalVars.lockfile):
             os.remove(GlobalVars.lockfile)
 
-
-# end of class MyApp
+        self.Destroy()
+        return 0
 
 if __name__ == "__main__":
     app = MyApp()

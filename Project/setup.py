@@ -32,7 +32,7 @@ PyInstaller.__main__.run([
     '--specpath', build,
     '--distpath', dir_PyCharm,
     '-F',
-    '--noconsole',  # Comment out for console to appear when running app
+    # '--noconsole',  # Comment out for console to appear when running app
     '--icon', os.path.join(dir_path, 'Resources', 'Local_Instant_Messenger.ico'),
     '--hidden-import', 'wx.adv',
     '--hidden-import', 'wx.xml',

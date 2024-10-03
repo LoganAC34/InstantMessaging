@@ -10,7 +10,6 @@ import shutil
 import subprocess
 import tempfile
 import threading
-from os.path import exists
 from tempfile import SpooledTemporaryFile
 
 import requests
@@ -50,6 +49,7 @@ class MyFrame(ChatWindow):
     def __init__(self, *args, **kwds):
         ChatWindow.__init__(self, *args, **kwds)
         self.SetTitle(f"Chat Window - {GlobalVars.VERSION}")
+        self.update = None
 
         # Variables
         self.sent_to = ''
@@ -59,8 +59,6 @@ class MyFrame(ChatWindow):
         self.characters = 0
         self.SetDoubleBuffered(True)
         self.SetIcon(wx.Icon(GlobalVars.icon))
-        self.UserNameWidth_Default = 50
-        self.UserNameWidth = self.UserNameWidth_Default
         self.UpdateStatus('characters', 0)
 
         # Remember window size and position
@@ -153,8 +151,10 @@ class MyFrame(ChatWindow):
                 server.update_variables()
             elif function == 'typing':
                 user = args
-                self.TypingUser.SetLabel(f'{user} is typing...')
-                self.timer_typing.Start(1000, oneShot=True)
+                typing_status = f'{user} is typing...'
+                if self.TypingUser.Label != typing_status:
+                    self.TypingUser.SetLabel(typing_status)
+                self.timer_typing.Start(2000, oneShot=True)
 
     def OpenSettings(self, event):
         if not self.SettingsWindow:
@@ -165,11 +165,8 @@ class MyFrame(ChatWindow):
             event.Skip()
 
     def ClearChat(self, event):
-        self.sizer_1.Clear(True)
         self.previous_sender = None
-        self.panel_chat_log.Scroll(0, 0)
-        self.panel_chat_log.FitInside()
-        self.UserNameWidth = self.UserNameWidth_Default
+        self.html_chat_log.SetPage(GlobalVars.html_template_code, "")
 
     def SendMessage(self, event):
         self.CheckConnection(self)
@@ -211,6 +208,7 @@ class MyFrame(ChatWindow):
 
             self.flash_count += 1
 
+    # noinspection PyUnusedLocal
     @staticmethod
     def CheckConnection(self):
         server.connection_status(Config.get_user_info('alias', 'local'))
@@ -243,15 +241,7 @@ class MyFrame(ChatWindow):
         # self.queue_to_server.put("Command:Shutdown")
         self._persistMgr.SaveAndUnregister()
 
-        # Get Update variable
-        if exists(GlobalVars.pkl_update):
-            with open(GlobalVars.pkl_update, 'rb') as f:
-                Update = pickle.load(f)
-        else:
-            Update = False
-            print("No local sha value")
-
-        if Update:
+        if self.update:
             print("Update available")
             # Copy Update script to temp folder
             py_update = 'Update.exe'
@@ -273,7 +263,6 @@ class MyFrame(ChatWindow):
             subprocess.Popen([update_script,
                               self.temp_file,
                               GlobalVars.app_path, GlobalVars.app_path,  # One is current, other is new (same place).
-                              GlobalVars.pkl_sha, self.sha_github,
                               GlobalVars.pkl_update]
                              )
             print("Closing main app.")
@@ -318,19 +307,14 @@ class MyFrame(ChatWindow):
             print(data['wheel'])
 
     def AppendMessage(self, username, message):
-        def test(username, message):
-            if username != self.previous_sender:
-                self.previous_sender = username
-                user_type = 'local-user'
-                username = html.escape(username)
-                self.html_chat_log.RunScript(f'window.insertUsername({json.dumps(username)}, {json.dumps(user_type)})')
+        if username != self.previous_sender:
+            self.previous_sender = username
+            user_type = 'local-user'
+            username = html.escape(username)
+            self.html_chat_log.RunScript(f'window.insertUsername({json.dumps(username)}, {json.dumps(user_type)})')
 
-            message = html.escape(message)
-            self.html_chat_log.RunScript(f'window.insertMessage({json.dumps(message)})')
-
-        test(username, message)
-        return
-
+        message = html.escape(message)
+        self.html_chat_log.RunScript(f'window.insertMessage({json.dumps(message)})')
 
     def EasterEgg(self, event):
         if GlobalVars.debug and not self.EasterEggWindow:
@@ -384,18 +368,32 @@ class MyFrame(ChatWindow):
         url_repo = 'https://api.github.com/repos/LoganAC34/InstantMessaging/releases/latest'
         response_data = requests.get(url_repo).json()
         version_name = response_data['name']
-        version_number = response_data['tag_name']
+        online_version_number_string = response_data['tag_name']
+        online_version_number = online_version_number_string.split(".")
+        online_version_major = int(online_version_number[0].lower().replace("v", ""))
+        online_version_minor = int(online_version_number[1])
+        online_version_patch = int(online_version_number[2])
         url_download = response_data['assets'][0]['browser_download_url']
+
+        current_version = GlobalVars.VERSION.split(".")
+        current_version_major = int(current_version[0].lower().replace("v", ""))
+        current_version_minor = int(current_version[1])
+        current_version_patch = int(current_version[2])
 
         print("Current version: " + GlobalVars.VERSION)
         print("Repo version: " + version_name)
 
-        if GlobalVars.VERSION != version_number and 'Stable' in version_name and not GlobalVars.debug:
+        is_new_version = (
+                (online_version_major, online_version_minor, online_version_patch) >
+                (current_version_major, current_version_minor, current_version_patch)
+        )
+        if is_new_version and 'Stable' in version_name and not GlobalVars.debug:
             self.temp_file = os.path.join(tempfile.gettempdir(), os.path.basename(url_download))
 
             # Set Update variable to True
             with open(GlobalVars.pkl_update, 'wb') as f:
                 pickle.dump(True, f)
+            self.update = True
 
             # Download file
             t = threading.Thread(target=self.DownloadUpdate, args=[url_download, self.temp_file])
