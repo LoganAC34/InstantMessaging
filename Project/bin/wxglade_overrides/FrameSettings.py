@@ -45,6 +45,7 @@ class FrameSettings(SettingsWindow):
 
     def On_EditColors(self, event):  # wxGlade: SettingsWindow.<event_handler>
         print("Event handler 'On_EditColors' not implemented!")
+        pass  # TODO: implement this
         if not self.EditColors:
             self.EditColors = EditColors.FrameEditColors(self)
             self.EditColors.CentreOnParent()

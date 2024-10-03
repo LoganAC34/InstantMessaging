@@ -10,7 +10,8 @@ class GlobalVars(object):
     # MAJOR version when you make incompatible API changes
     # MINOR version when you add functionality in a backwards compatible manner
     # PATCH version when you make backwards compatible bug fixes
-    version_number = 'v3.0.1'
+    PUBLISHER = 'OrangeByte'
+    VERSION = 'v3.0.2'
 
     # Relative and exe paths
     # Get exe location
@@ -55,5 +56,5 @@ class GlobalVars(object):
 
     # Chat log HTML template
     edge_webview_installer = os.path.join(exe, 'Resources', 'MicrosoftEdgeWebview2Setup.exe')
-    html_template_path = r'C:\Users\lcarrozza\PycharmProjects\LocalInstantMessenger\Project\bin\Resources\message_log_template.html'
+    html_template_path = os.path.join(exe, 'Resources', 'message_log_template.html')
     html_template_code = open(html_template_path).read()

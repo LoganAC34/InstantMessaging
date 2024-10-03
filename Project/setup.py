@@ -32,10 +32,13 @@ PyInstaller.__main__.run([
     '--specpath', build,
     '--distpath', dir_PyCharm,
     '-F',
-    '--noconsole',
+    '--noconsole',  # Comment out for console to appear when running app
     '--icon', os.path.join(dir_path, 'Resources', 'Local_Instant_Messenger.ico'),
     '--hidden-import', 'wx.adv',
     '--hidden-import', 'wx.xml',
+    # '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2Loader.dll.lib;./wx',  # Don't need?
+    # '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2LoaderStatic.lib;./wx',  # Don't need?
+    '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2Loader.dll;./wx',  # Otherwise chat window doesn't show
     '--add-data', f'{sys.prefix}/Lib/site-packages/enchant;./enchant',  # Otherwise enchant errors
     # '--debug=imports',
     '--add-data', rf'{dst};.'

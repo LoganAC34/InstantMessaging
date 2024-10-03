@@ -49,7 +49,7 @@ class MyFileDropTarget(wx.FileDropTarget):
 class MyFrame(ChatWindow):
     def __init__(self, *args, **kwds):
         ChatWindow.__init__(self, *args, **kwds)
-        self.SetTitle(f"Chat Window - {GlobalVars.version_number}")
+        self.SetTitle(f"Chat Window - {GlobalVars.VERSION}")
 
         # Variables
         self.sent_to = ''
@@ -129,7 +129,7 @@ class MyFrame(ChatWindow):
         data = {}
         try:
             data = self.queue_server_and_app.get_nowait()
-            print(data)
+            # print(data)
         except queue.Empty:
             pass
 
@@ -137,6 +137,7 @@ class MyFrame(ChatWindow):
             function = data['function']
             args = data['args']
             if function == 'message':
+                print(data)
                 username = args['user']
                 message = args['message']
                 self.AppendMessage(username, message)
@@ -322,7 +323,7 @@ class MyFrame(ChatWindow):
                 self.previous_sender = username
                 user_type = 'local-user'
                 username = html.escape(username)
-                self.html_chat_log.RunScript(f'window.insertUsername("{username}", "{user_type}")')
+                self.html_chat_log.RunScript(f'window.insertUsername({json.dumps(username)}, {json.dumps(user_type)})')
 
             message = html.escape(message)
             self.html_chat_log.RunScript(f'window.insertMessage({json.dumps(message)})')
@@ -386,10 +387,10 @@ class MyFrame(ChatWindow):
         version_number = response_data['tag_name']
         url_download = response_data['assets'][0]['browser_download_url']
 
-        print("Current version: " + GlobalVars.version_number)
+        print("Current version: " + GlobalVars.VERSION)
         print("Repo version: " + version_name)
 
-        if GlobalVars.version_number != version_number and 'Stable' in version_name and not GlobalVars.debug:
+        if GlobalVars.VERSION != version_number and 'Stable' in version_name and not GlobalVars.debug:
             self.temp_file = os.path.join(tempfile.gettempdir(), os.path.basename(url_download))
 
             # Set Update variable to True

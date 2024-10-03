@@ -66,6 +66,9 @@ class EasterEggOverride(EasterEgg):
         if event:
             event.Skip()
 
+    def on_close(self, event):
+        self.Destroy()
+
     def TypeString(self, text):
         if text not in self.Output.GetLabel():
             typing_speed = round(2000 / len(text))  # Time in milliseconds it should take to type the entire message.

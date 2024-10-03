@@ -70,9 +70,11 @@ class SocketWorkerThread(threading.Thread):
                     print("Sending message to " + self.remote_host + ":" + str(send_port))
                     print(out_data['args']['message'])
                 elif function == 'status':
-                    print(f"Testing connection to {self.remote_host}:{str(send_port)} [{current_time_formatted}]")
+                    # print(f"Testing connection to {self.remote_host}:{str(send_port)} [{current_time_formatted}]")
+                    pass
                 elif function == 'typing':
-                    print("Telling " + self.remote_host + ":" + str(send_port) + " You're typing.")
+                    # print("Telling " + self.remote_host + ":" + str(send_port) + " You're typing.")
+                    pass
 
                 try:
                     client.settimeout(0.1)
