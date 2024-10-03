@@ -18,10 +18,11 @@ import wx.html2
 import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
+from Project.bin.wxglade.ChatWindow import *
 
 from Project.bin.Scripts import Config
+from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.Scripts.Server import SocketWorkerThread
-from Project.bin.wxglade.ChatWindow import *
 from Project.bin.wxglade_overrides import EasterEgg
 from Project.bin.wxglade_overrides import FrameSettings
 
@@ -152,9 +153,9 @@ class MyFrame(ChatWindow):
             elif function == 'typing':
                 user = args
                 typing_status = f'{user} is typing...'
+                self.timer_typing.Start(2000, oneShot=True)
                 if self.TypingUser.Label != typing_status:
                     self.TypingUser.SetLabel(typing_status)
-                self.timer_typing.Start(2000, oneShot=True)
 
     def OpenSettings(self, event):
         if not self.SettingsWindow:

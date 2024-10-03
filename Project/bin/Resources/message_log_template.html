@@ -53,7 +53,14 @@
             var message_div = document.createElement('div');
             message_div.className = 'message';
             var message_p = document.createElement('p');
-            message_p.innerText = message;
+
+            // Use DOMParser to parse the message text as HTML and extract the text content
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(message, 'text/html');
+            message_p.textContent = doc.body.textContent;
+
+            message_p.textContent = doc.body.textContent;
+            // message_p.innerText = message;
             message_div.appendChild(message_p);
             document.body.appendChild(message_div);
             scrollToBottom(isScrolledToBottom);
