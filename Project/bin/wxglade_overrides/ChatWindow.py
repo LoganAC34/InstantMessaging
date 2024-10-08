@@ -99,9 +99,6 @@ class MyFrame(ChatWindow):
         self.text_ctrl_message.SetDropTarget(FileDrTr)
         self.Bind(EVT_DROP_EVENT, self.LabelTextUpdate)
 
-        # On minimize and restore
-        self.Bind(wx.EVT_ACTIVATE, self.OnResize)
-
         # character status flashing timer
         self.flash_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer_character_status, self.flash_timer)
