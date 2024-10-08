@@ -7,7 +7,6 @@
       <excludeFolder url="file://$MODULE_DIR$/build" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/Project/Testing/Local_Instant_Messenger" />
-      <excludeFolder url="file://$MODULE_DIR$/Project/bin/wxglade" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.10 (LocalInstantMessenger)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
