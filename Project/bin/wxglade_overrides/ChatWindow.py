@@ -45,6 +45,41 @@ class MyFileDropTarget(wx.FileDropTarget):
         return True
 
 
+def Notification(title, message):
+    update_popup = wx.adv.NotificationMessage(title=title, message=message)
+    update_popup.SetIcon(wx.Icon(GlobalVars.icon))
+    update_popup.Show()
+
+
+def DownloadUpdate(url_download, temp_file):
+    print("Downloading updated file...")
+    # Download the current file
+    while True:
+        try:
+            temp = SpooledTemporaryFile()
+            session = requests.Session()
+            resp = session.get(url_download)
+            temp.write(resp.content)
+            temp.seek(0)
+
+            # Write to file
+            with open(temp_file, 'wb') as local_file:
+                local_file.write(resp.content)
+
+            # Set Update variable to True
+            with open(GlobalVars.pkl_update, 'wb') as f:
+                # noinspection PyTypeChecker
+                pickle.dump(True, f)
+
+            # Notification about update
+            Notification(title='Download Complete!', message="Close the program to use updated version.")
+            print("Done.")
+            break
+        except Exception as e:
+            print("Download failed. Trying again.")
+            print(e)
+            pass
+
 class MyFrame(ChatWindow):
     def __init__(self, *args, **kwds):
         ChatWindow.__init__(self, *args, **kwds)
@@ -380,64 +415,24 @@ class MyFrame(ChatWindow):
                 (online_version_major, online_version_minor, online_version_patch) >
                 (current_version_major, current_version_minor, current_version_patch)
         )
-        if is_new_version and 'Stable' in version_name and not GlobalVars.debug:
+        if is_new_version and 'Stable' in version_name:
             self.temp_file = os.path.join(tempfile.gettempdir(), os.path.basename(url_download))
 
-            # Set Update variable to True
-            with open(GlobalVars.pkl_update, 'wb') as f:
-                # noinspection PyTypeChecker
-                pickle.dump(True, f)
-            self.update = True
+            Notification(title='Downloading update...',
+                         message="There is an update available. Please wait for it to finish "
+                                 "downloading before closing the program")
 
-            # Download file
-            t = threading.Thread(target=self.DownloadUpdate, args=[url_download, self.temp_file])
-            t.daemon = True
-            t.start()
-
-        else:
-            print("Program is up to date!")
-
-    @staticmethod
-    def DownloadUpdate(url_download, temp_file):
-        print("Downloading updated file...")
-        # Notification about update
-        update_popup = wx.adv.NotificationMessage(title='Downloading update...',
-                                                  message="There is an update available. Please wait for it to finish "
-                                                          "downloading before closing the program")
-        update_popup_icon = wx.Icon(GlobalVars.icon)
-        update_popup.SetIcon(update_popup_icon)
-        update_popup.Show()
-
-        # Download the current file
-        while True:
-            try:
-                temp = SpooledTemporaryFile()
-                session = requests.Session()
-                resp = session.get(url_download)
-                temp.write(resp.content)
-                temp.seek(0)
-
-                # Write to file
-                with open(temp_file, 'wb') as local_file:
-                    local_file.write(resp.content)
-
+            if not GlobalVars.debug:
                 # Set Update variable to True
                 with open(GlobalVars.pkl_update, 'wb') as f:
                     # noinspection PyTypeChecker
                     pickle.dump(True, f)
+                self.update = True
 
-                # Notification about update
-                update_popup.Destroy()
-                update_popup = wx.adv.NotificationMessage(title='Download Complete!',
-                                                          message="Close the program to use updated version.")
-                update_popup.SetIcon(update_popup_icon)
-                update_popup.Show()
-                print("Done.")
-                break
-            except Exception as e:
-                print("Download failed. Trying again.")
-                print(e)
-                pass
-        update_popup.Close()
-        update_popup.Destroy()
-        update_popup_icon.Destroy()
+                # Download file
+                t = threading.Thread(target=DownloadUpdate, args=[url_download, self.temp_file])
+                t.daemon = True
+                t.start()
+
+        else:
+            print("Program is up to date!")
