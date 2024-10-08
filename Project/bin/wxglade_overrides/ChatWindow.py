@@ -18,11 +18,11 @@ import wx.html2
 import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
-from Project.bin.wxglade.ChatWindow import *
 
 from Project.bin.Scripts import Config
 from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.Scripts.Server import SocketWorkerThread
+from Project.bin.wxglade.ChatWindow import *
 from Project.bin.wxglade_overrides import EasterEgg
 from Project.bin.wxglade_overrides import FrameSettings
 
@@ -58,7 +58,7 @@ class MyFrame(ChatWindow):
         self.SettingsWindow = None
         self.EasterEggWindow = None
         self.characters = 0
-        self.SetDoubleBuffered(True)
+        # self.SetDoubleBuffered(True)
         self.SetIcon(wx.Icon(GlobalVars.icon))
         self.UpdateStatus('characters', 0)
 
@@ -220,10 +220,6 @@ class MyFrame(ChatWindow):
     def OnResize(self, event):
         if event:
             event.Skip()
-
-        """self.Refresh()
-        self.Update()
-        self.Layout()  # Causing issues with message box getting resized"""
 
         self.panel_send.SetAutoLayout(True)
         self.panel_send.Refresh()
