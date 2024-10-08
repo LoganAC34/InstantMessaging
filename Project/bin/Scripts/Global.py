@@ -8,7 +8,7 @@ class GlobalVars(object):
     # TODO: update version number
     # TODO: Update changelog!!!
     PUBLISHER = 'OrangeByte'
-    VERSION = 'v3.0.3'
+    VERSION = 'v3.0.4'
     # MAJOR version when you make incompatible API changes
     # MINOR version when you add functionality in a backwards compatible manner
     # PATCH version when you make backwards compatible bug fixes

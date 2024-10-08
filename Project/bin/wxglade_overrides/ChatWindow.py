@@ -20,7 +20,6 @@ import wx.lib.newevent
 import wx.richtext
 
 from Project.bin.Scripts import Config
-from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.Scripts.Server import SocketWorkerThread
 from Project.bin.wxglade.ChatWindow import *
 from Project.bin.wxglade_overrides import EasterEgg
