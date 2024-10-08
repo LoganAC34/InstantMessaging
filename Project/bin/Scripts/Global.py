@@ -6,12 +6,12 @@ import sys
 
 class GlobalVars(object):
     # TODO: update version number
-    # Update changelog!!!
+    # TODO: Update changelog!!!
+    PUBLISHER = 'OrangeByte'
+    VERSION = 'v3.0.3'
     # MAJOR version when you make incompatible API changes
     # MINOR version when you add functionality in a backwards compatible manner
     # PATCH version when you make backwards compatible bug fixes
-    PUBLISHER = 'OrangeByte'
-    VERSION = 'v3.0.2'
 
     # Relative and exe paths
     # Get exe location

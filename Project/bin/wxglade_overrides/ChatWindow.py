@@ -390,6 +390,7 @@ class MyFrame(ChatWindow):
 
             # Set Update variable to True
             with open(GlobalVars.pkl_update, 'wb') as f:
+                # noinspection PyTypeChecker
                 pickle.dump(True, f)
             self.update = True
 
@@ -427,6 +428,7 @@ class MyFrame(ChatWindow):
 
                 # Set Update variable to True
                 with open(GlobalVars.pkl_update, 'wb') as f:
+                    # noinspection PyTypeChecker
                     pickle.dump(True, f)
 
                 # Notification about update
