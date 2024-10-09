@@ -1,12 +1,20 @@
 # TODO: Update changelog
+v3.0.5 - Minor Release
+ - Reworked update notification system. Now shows "Update available" in the app and with a single system notification.
 
-v.3.0.1 - Bug Fix
+v3.0.4 - Bug Fix
+ - Fixed ui flickering for things like typing indicator and character count/etc.
+
+v3.0.2 - Minor Release
+ - Switched to webview2 for chat log for better control on theming and content
+
+v3.0.1 - Bug Fix
  - Fixed updated check and download to be more reliable.
 
 v3.0.0 - Major Release
  - Added framework for custom color themes.
  - Restructured chat log. Username is above message now so it no longer pushes messages based on username size.
- - Fixed bug in which server couldn't receive messages longer than about 629 characters due to truncating encrypted message.
+ - Fixed bug where server couldn't receive messages longer than about 629 characters due to truncating encrypted message.
  - Fixed issue that would make long message delay appending to chat log.
 
 v2.4.7 - Bug Fix
