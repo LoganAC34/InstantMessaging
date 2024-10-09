@@ -47,10 +47,11 @@ class MyFileDropTarget(wx.FileDropTarget):
 
 def Notification(title, message):
     update_popup = wx.adv.NotificationMessage(title=title, message=message)
-    update_popup.SetIcon(wx.Icon(GlobalVars.icon))
+    icon = wx.Icon(GlobalVars.icon)
+    update_popup.SetIcon(icon)
     update_popup.Show()
 
-    return update_popup
+    return update_popup, icon
 
 class MyFrame(ChatWindow):
     def __init__(self, *args, **kwds):
@@ -66,6 +67,7 @@ class MyFrame(ChatWindow):
         # self.SetDoubleBuffered(True)
         self.SetIcon(wx.Icon(GlobalVars.icon))
         self.UpdateStatus('characters', 0)
+        self.update_notification = None
 
         # Remember window size and position
         self._persistMgr = wx.lib.agw.persist.PersistenceManager.Get()
@@ -239,6 +241,12 @@ class MyFrame(ChatWindow):
     def OnClose(self, event):
         # self.queue_to_server.put("Command:Shutdown")
         self._persistMgr.SaveAndUnregister()
+
+        # Cleanup notification and icon
+        if self.update_notification:
+            self.update_notification[0].destroy()
+            self.update_notification[1].destroy()
+
         self.Destroy()
         event.Skip()
 
@@ -285,6 +293,9 @@ class MyFrame(ChatWindow):
 
         message = html.escape(message)
         self.html_chat_log.RunScript(f'window.insertMessage({json.dumps(message)})')
+
+    def AppendImage(self, image_path):
+        pass
 
     def EasterEgg(self, event):
         if GlobalVars.debug and not self.EasterEggWindow:
@@ -355,7 +366,7 @@ class MyFrame(ChatWindow):
         current_version_patch = int(current_version[2])
 
         print("Current version: " + GlobalVars.VERSION)
-        print("Repo version: " + version_name(online_version_number_string))
+        print(f"Repo version: {version_name} ({online_version_number_string})")
 
         is_new_version = (
                 (online_version_major, online_version_minor, online_version_patch) >
@@ -403,7 +414,9 @@ class MyFrame(ChatWindow):
                 pickle.dump(True, f)
 
         # Notification about update
-        Notification(title='Update available!', message="Press the update button in the program to update.")
+        notification, icon = Notification(title='Update available!',
+                                          message="Press the update button in the program to update.")
+        self.update_notification = [notification, icon]
 
         tool = self.ChatWindow_toolbar.AddTool(12, 'Update available!', wx.NullBitmap,
                                                shortHelp="Click me to update!")
