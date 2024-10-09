@@ -270,8 +270,8 @@ class MyFrame(ChatWindow):
 
         # Cleanup notification and icon
         if self.update_notification:
-            self.update_notification[0].destroy()
-            self.update_notification[1].destroy()
+            self.update_notification[0].Destroy()
+            self.update_notification[1].Destroy()
 
         self.Destroy()
         event.Skip()
