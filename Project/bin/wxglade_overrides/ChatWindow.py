@@ -11,7 +11,6 @@ import shutil
 import subprocess
 import tempfile
 import threading
-from pydoc import ispath
 from tempfile import SpooledTemporaryFile
 
 import requests
@@ -20,10 +19,11 @@ import wx.html2
 import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
+from Project.bin.wxglade.ChatWindow import *
 
 from Project.bin.Scripts import Config
+from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.Scripts.Server import SocketWorkerThread
-from Project.bin.wxglade.ChatWindow import *
 from Project.bin.wxglade_overrides import EasterEgg
 from Project.bin.wxglade_overrides import FrameSettings
 
@@ -325,7 +325,7 @@ class MyFrame(ChatWindow):
     def AppendImage(self, username, image):
         self.AppendUsername(username)
 
-        if ispath(image):
+        if os.path.isfile(image):
             with open(image, "rb") as image_file:
                 image = base64.b64encode(image_file.read()).decode('utf-8')
 
