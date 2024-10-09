@@ -338,6 +338,9 @@ class MyFrame(ChatWindow):
         url_repo = 'https://api.github.com/repos/LoganAC34/InstantMessaging/releases/latest'
         response_data = requests.get(url_repo).json()
         version_name = response_data['name']
+        is_prerelease = response_data['prerelease']
+
+        # Get the latest number
         online_version_number_string = response_data['tag_name']
         online_version_number = online_version_number_string.split(".")
         online_version_major = int(online_version_number[0].lower().replace("v", ""))
@@ -345,19 +348,20 @@ class MyFrame(ChatWindow):
         online_version_patch = int(online_version_number[2])
         url_download = response_data['assets'][0]['browser_download_url']
 
+        # Get the current downloaded version
         current_version = GlobalVars.VERSION.split(".")
         current_version_major = int(current_version[0].lower().replace("v", ""))
         current_version_minor = int(current_version[1])
         current_version_patch = int(current_version[2])
 
         print("Current version: " + GlobalVars.VERSION)
-        print("Repo version: " + version_name)
+        print("Repo version: " + version_name(online_version_number_string))
 
         is_new_version = (
                 (online_version_major, online_version_minor, online_version_patch) >
                 (current_version_major, current_version_minor, current_version_patch)
         )
-        if is_new_version and 'Stable' in version_name:
+        if is_new_version and not is_prerelease:
             print("Update available!")
 
             # Download file
