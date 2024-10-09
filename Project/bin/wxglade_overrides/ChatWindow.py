@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+import base64
 import html
 import json
 import os
@@ -10,6 +11,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
+from pydoc import ispath
 from tempfile import SpooledTemporaryFile
 
 import requests
@@ -104,7 +106,7 @@ class MyFrame(ChatWindow):
         # Drop target
         FileDrTr = MyFileDropTarget(self)
         self.text_ctrl_message.SetDropTarget(FileDrTr)
-        self.Bind(EVT_DROP_EVENT, self.LabelTextUpdate)
+        self.Bind(EVT_DROP_EVENT, self.SendImage)
 
         # character status flashing timer
         self.flash_timer = wx.Timer(self)
@@ -113,12 +115,6 @@ class MyFrame(ChatWindow):
         self.original_color = self.StatusCharacters.GetForegroundColour()
         self.flash_count = 0
         self.flash_count_max = 12
-
-    def LabelTextUpdate(self, event):
-        image_path = event.data
-        print(f"dropped {image_path}")
-        image = wx.Image(image_path, wx.BITMAP_TYPE_ANY)
-        self.text_ctrl_message.AddImage(image)
 
     def ClearTyping(self, event):
         self.TypingUser.SetLabel('')
@@ -129,6 +125,14 @@ class MyFrame(ChatWindow):
 
     # noinspection PyUnusedLocal
     def HandleServer(self, event):
+        def notification(username, message):
+            app = wx.TopLevelWindow()
+            if not app.IsActive():
+                wx.TopLevelWindow.RequestUserAttention(self)
+                popup = wx.adv.NotificationMessage(title=username, message=message)
+                popup.SetIcon(wx.Icon(GlobalVars.icon))
+                popup.Show()
+
         data = {}
         try:
             data = self.queue_server_and_app.get_nowait()
@@ -145,11 +149,13 @@ class MyFrame(ChatWindow):
                 message = args['message']
                 self.AppendMessage(username, message)
                 app = wx.TopLevelWindow()
-                if not app.IsActive():
-                    wx.TopLevelWindow.RequestUserAttention(self)
-                    popup = wx.adv.NotificationMessage(title=username, message=message)
-                    popup.SetIcon(wx.Icon(GlobalVars.icon))
-                    popup.Show()
+                notification(username, message)
+            elif function == 'image':
+                username = args['user']
+                image_data = args['image']
+                print("Received image:" + image_data)
+                self.AppendImage(username, image_data)
+                notification(username, "You received an image.")
             elif function == 'status':
                 self.UpdateStatus('sent to', args)
             elif function == 'update_variables':
@@ -178,13 +184,33 @@ class MyFrame(ChatWindow):
         message = self.text_ctrl_message.GetValue()
         if message and len(message) <= GlobalVars.maxCharacterLength:
             PC_Local_Name = Config.get_user_info('alias', 'local')
-            server.send_message(PC_Local_Name, message)
             self.AppendMessage(PC_Local_Name, message)
+            server.send_message(PC_Local_Name, message)
             self.text_ctrl_message.ClearAll()
             self.UpdateStatus('characters', 0)
             wx.CallAfter(self.CheckConnection_Stop, event)
         elif len(message) > GlobalVars.maxCharacterLength:
             self.on_start_character_flashing(event)
+
+    def SendImage(self, event):
+        image_path = event.data
+
+        ext = os.path.splitext(image_path)[1].lower()
+        if ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp']:
+            print(f"dropped {image_path}")
+
+            with open(image_path, "rb") as image_file:
+                image_data = base64.b64encode(image_file.read()).decode('utf-8')
+
+            PC_Local_Name = Config.get_user_info('alias', 'local')
+            self.AppendImage(PC_Local_Name, image_data)
+
+            self.CheckConnection(self)
+            server.send_image(PC_Local_Name, image_data)
+            wx.CallAfter(self.CheckConnection_Stop, event)
+        else:
+            print(f"Cannot display file {ext}")
+            return
 
     def on_start_character_flashing(self, event):
         if not self.flashing:
@@ -285,17 +311,25 @@ class MyFrame(ChatWindow):
             print(data['wheel'])
 
     def AppendMessage(self, username, message):
+        self.AppendUsername(username)
+        message = html.escape(message)
+        self.html_chat_log.RunScript(f'window.insertMessage({json.dumps(message)})')
+
+    def AppendUsername(self, username):
         if username != self.previous_sender:
             self.previous_sender = username
             user_type = 'local-user'
             username = html.escape(username)
             self.html_chat_log.RunScript(f'window.insertUsername({json.dumps(username)}, {json.dumps(user_type)})')
 
-        message = html.escape(message)
-        self.html_chat_log.RunScript(f'window.insertMessage({json.dumps(message)})')
+    def AppendImage(self, username, image):
+        self.AppendUsername(username)
 
-    def AppendImage(self, image_path):
-        pass
+        if ispath(image):
+            with open(image, "rb") as image_file:
+                image = base64.b64encode(image_file.read()).decode('utf-8')
+
+        self.html_chat_log.RunScript(rf'window.insertImage("{image}")')
 
     def EasterEgg(self, event):
         if GlobalVars.debug and not self.EasterEggWindow:

@@ -24,6 +24,16 @@
         .message p {
             margin: 0; /* Reset paragraph margin */
         }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            color: #e3e3e3; /* text color light gray */
+            background-color: #1d1d1d; /* dark gray */
+            border: 1px solid #434343; /* lighter dark gray */
+            border-radius: 4px;
+        }
+
         .username {
             font-weight: normal;
             margin-bottom: 3px;
@@ -63,6 +73,18 @@
             // message_p.innerText = message;
             message_div.appendChild(message_p);
             document.body.appendChild(message_div);
+            scrollToBottom(isScrolledToBottom);
+        }
+
+        // insert new image
+        window.insertImage = function(base64Image) {
+            var isScrolledToBottom = checkScrolledToBottom();
+            var image_div = document.createElement('div');
+            image_div.className = 'image-container';
+            var img = document.createElement('img');
+            img.src = 'data:image/png;base64,' + base64Image;
+            image_div.appendChild(img);
+            document.body.appendChild(image_div);
             scrollToBottom(isScrolledToBottom);
         }
 

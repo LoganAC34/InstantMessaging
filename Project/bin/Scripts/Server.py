@@ -156,7 +156,7 @@ class SocketWorkerThread(threading.Thread):
 
         function = data['function']
         args = data['args']
-        if function == 'message':
+        if function in ['message', 'image']:
             if self.remote_override:
                 data['args']['user'] = self.remote_name
             print(data)
@@ -170,6 +170,10 @@ class SocketWorkerThread(threading.Thread):
         time.sleep(0.01)
         # print("Event triggered")
         # print(self.out_data_queue)
+
+    def send_image(self, user, image_data):
+        self.out_data_queue.put({'function': 'image', 'args': {'user': user, 'image': image_data}})
+        time.sleep(0.01)
 
     def connection_status(self, user=None):
         self.out_data_queue.put({'function': 'status', 'args': user})
