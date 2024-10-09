@@ -41,6 +41,7 @@ def create_template():
 
     # Write to config file
     with open(GlobalVars.cfgFile_path, 'x') as configfile:
+        # noinspection PyTypeChecker
         config_template.write(configfile)
 
 
@@ -93,6 +94,7 @@ def set_user_info(att, val, user, num=1):
 
     # Write to config file
     with open(GlobalVars.cfgFile_path, 'w') as configfile:  # save
+        # noinspection PyTypeChecker
         config.write(configfile)
 
 
@@ -130,6 +132,7 @@ def add_user():
 
     # Write to config file
     with open(GlobalVars.cfgFile_path, 'w') as configfile:  # save
+        # noinspection PyTypeChecker
         config.write(configfile)
 
     return user
@@ -161,6 +164,7 @@ def delete_user(user, num=1):
 
     # Write to config file
     with open(GlobalVars.cfgFile_path, 'w') as configfile:  # save
+        # noinspection PyTypeChecker
         config.write(configfile)
 
     return True

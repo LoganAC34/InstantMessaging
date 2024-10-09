@@ -22,6 +22,7 @@ def run(downloaded_path, current_path, new_path, pkl_update):
 
                 # Set Update variable
                 with open(pkl_update, 'wb') as f:
+                    # noinspection PyTypeChecker
                     pickle.dump(False, f)
 
                 print("Run: " + new_path)

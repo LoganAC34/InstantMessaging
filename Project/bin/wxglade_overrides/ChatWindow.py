@@ -47,13 +47,15 @@ class MyFileDropTarget(wx.FileDropTarget):
         return True
 
 
-def Notification(title, message):
-    update_popup = wx.adv.NotificationMessage(title=title, message=message)
-    icon = wx.Icon(GlobalVars.program_icon)
-    update_popup.SetIcon(icon)
-    update_popup.Show()
+def Notification(parent, title, message, high_priority: bool = False):
+    app_unfocused = not parent.IsActive()
+    if app_unfocused or high_priority:
+        update_popup = wx.adv.NotificationMessage(title=title, message=message)
+        icon = wx.Icon(GlobalVars.program_icon)
+        update_popup.SetIcon(icon)
+        update_popup.Show()
 
-    return update_popup, icon
+        return update_popup, icon
 
 class MyFrame(ChatWindow):
     def __init__(self, *args, **kwds):
@@ -125,14 +127,6 @@ class MyFrame(ChatWindow):
 
     # noinspection PyUnusedLocal
     def HandleServer(self, event):
-        def notification(username, message):
-            app = wx.TopLevelWindow()
-            if not app.IsActive():
-                wx.TopLevelWindow.RequestUserAttention(self)
-                popup = wx.adv.NotificationMessage(title=username, message=message)
-                popup.SetIcon(wx.Icon(GlobalVars.program_icon))
-                popup.Show()
-
         data = {}
         try:
             data = self.queue_server_and_app.get_nowait()
@@ -149,13 +143,13 @@ class MyFrame(ChatWindow):
                 message = args['message']
                 self.AppendMessage(username, message)
                 app = wx.TopLevelWindow()
-                notification(username, message)
+                Notification(self, username, message)
             elif function == 'image':
                 username = args['user']
                 image_data = args['image']
                 print("Received image:" + image_data)
                 self.AppendImage(username, image_data)
-                notification(username, "You received an image.")
+                Notification(self, username, "You received an image.")
             elif function == 'status':
                 self.UpdateStatus('sent to', args)
             elif function == 'update_variables':
@@ -448,8 +442,10 @@ class MyFrame(ChatWindow):
                 pickle.dump(True, f)
 
         # Notification about update
-        notification, icon = Notification(title='Update available!',
-                                          message="Press the update button in the program to update.")
+        notification, icon = Notification(self,
+                                          title='Update available!',
+                                          message="Press the update button in the program to update.",
+                                          high_priority=True)
         self.update_notification = [notification, icon]
 
         tool = self.ChatWindow_toolbar.AddTool(12, 'Update available!', wx.NullBitmap,

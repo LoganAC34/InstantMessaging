@@ -3,6 +3,7 @@ v4.0.0 - Major Release
  - Added ability to send images by dragging and dropping into the message composer.
  - Fixed lingering notification icons in system tray after update.
  - Fixed bug in update function.
+ - Fixed bug what made notification always pop up regardless on window focus.
 
 v3.0.5 - Minor Release
  - Reworked update notification system. Now shows "Update available" in the app and with a single system notification.
