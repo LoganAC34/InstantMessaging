@@ -26,12 +26,19 @@
         }
 
         .image-container img {
-            width: 100%;
+            margin-left: 15px;
+            margin-bottom: 10px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            padding-left: 3px;
+            padding-right: 3px;
+            width: calc(100% - 15px);
             height: auto;
             color: #e3e3e3; /* text color light gray */
             background-color: #1d1d1d; /* dark gray */
             border: 1px solid #434343; /* lighter dark gray */
             border-radius: 4px;
+            box-sizing: border-box; /* add this line */
         }
 
         .username {

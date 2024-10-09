@@ -1,4 +1,7 @@
 # TODO: Update changelog
+v4.0.1 - Bug Fix
+ - Small bug fixes
+
 v4.0.0 - Major Release
  - Added ability to send images by dragging and dropping into the message composer.
  - Fixed lingering notification icons in system tray after update.
