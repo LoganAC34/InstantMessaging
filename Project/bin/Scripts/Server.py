@@ -13,6 +13,11 @@ from Project.bin.Scripts import Config
 from Project.bin.Scripts.Global import GlobalVars
 
 
+def send_via_msg(remote_host, user, msg):
+    batchMessage = f'{user}: {msg}'
+    batchMessage = batchMessage.replace(GlobalVars.lineBreak, ' ')
+    subprocess.call(f'msg /SERVER:{remote_host} * /TIME:60 "{batchMessage}"', shell=True)
+
 # SERVER ----------------------------------------------------------------------------------------
 class SocketWorkerThread(threading.Thread):
     """Worker Thread Class."""
@@ -69,6 +74,8 @@ class SocketWorkerThread(threading.Thread):
                 if function == 'message':
                     print("Sending message to " + self.remote_host + ":" + str(send_port))
                     print(out_data['args']['message'])
+                elif function == 'image':
+                    print("Sending image to " + self.remote_host + ":" + str(send_port))
                 elif function == 'status':
                     # print(f"Testing connection to {self.remote_host}:{str(send_port)} [{current_time_formatted}]")
                     pass
@@ -90,9 +97,11 @@ class SocketWorkerThread(threading.Thread):
                         args = out_data['args']
                         user = args['user']
                         msg = args['message']
-                        batchMessage = f'{user}: {msg}'
-                        batchMessage = batchMessage.replace(GlobalVars.lineBreak, ' ')
-                        subprocess.call(f'msg /SERVER:{self.remote_host} * /TIME:60 "{batchMessage}"', shell=True)
+                        send_via_msg(self.remote_host, user, msg)
+                    if function == 'image':
+                        args = out_data['args']
+                        user = args['user']
+                        send_via_msg(self.remote_host, user, "Sent an image.")
 
                 # Status
                 action = 'Will send'
