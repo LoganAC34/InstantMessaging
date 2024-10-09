@@ -49,7 +49,7 @@ class MyFileDropTarget(wx.FileDropTarget):
 
 def Notification(title, message):
     update_popup = wx.adv.NotificationMessage(title=title, message=message)
-    icon = wx.Icon(GlobalVars.icon)
+    icon = wx.Icon(GlobalVars.program_icon)
     update_popup.SetIcon(icon)
     update_popup.Show()
 
@@ -67,7 +67,7 @@ class MyFrame(ChatWindow):
         self.EasterEggWindow = None
         self.characters = 0
         # self.SetDoubleBuffered(True)
-        self.SetIcon(wx.Icon(GlobalVars.icon))
+        self.SetIcon(wx.Icon(GlobalVars.program_icon))
         self.UpdateStatus('characters', 0)
         self.update_notification = None
 
@@ -130,7 +130,7 @@ class MyFrame(ChatWindow):
             if not app.IsActive():
                 wx.TopLevelWindow.RequestUserAttention(self)
                 popup = wx.adv.NotificationMessage(title=username, message=message)
-                popup.SetIcon(wx.Icon(GlobalVars.icon))
+                popup.SetIcon(wx.Icon(GlobalVars.program_icon))
                 popup.Show()
 
         data = {}
@@ -468,8 +468,8 @@ class MyFrame(ChatWindow):
             shutil.copy(src_script_path, dst_script_path)
 
             # Copy Notification icon to temp folder
-            src_icon_path = GlobalVars.icon
-            dst_icon_path = os.path.join(tempfile.gettempdir(), os.path.basename(GlobalVars.icon))
+            src_icon_path = GlobalVars.program_icon
+            dst_icon_path = os.path.join(tempfile.gettempdir(), os.path.basename(GlobalVars.program_icon))
             print("Source: " + src_icon_path)
             print("Paste: " + dst_icon_path)
             shutil.copy(src_icon_path, dst_icon_path)

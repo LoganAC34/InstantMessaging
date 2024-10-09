@@ -42,7 +42,8 @@ class GlobalVars(object):
     lockfile = my_data_dir / 'program.lock'
 
     # Global Variables
-    icon = os.path.join(exe, 'Resources', 'Local_Instant_Messenger.ico')
+    program_icon = os.path.join(exe, 'Resources', 'Local_Instant_Messenger.ico')
+    company_logo = os.path.join(exe, 'Resources', 'OrangeByte_Logo.png')
     maxCharacterLength = 256
     lineBreak = '\r'
     allowed_keys = [8, 127, 305, 312, 313, 314, 315, 316, 317, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 364,

@@ -6,10 +6,10 @@ import wx.adv
 import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
+from Project.bin.wxglade.SettingsWindow import *
 
 from Project.bin.Scripts import Config
 from Project.bin.Scripts.Global import GlobalVars
-from Project.bin.wxglade.SettingsWindow import *
 from Project.bin.wxglade_overrides import ChatWindow
 from Project.bin.wxglade_overrides import WarningMessage
 
@@ -20,7 +20,7 @@ class FrameSettings(SettingsWindow):
         self.EditColors = None
         self.WarningMessage = None
         self.server = ChatWindow.server
-        self.SetIcon(wx.Icon(GlobalVars.icon))
+        self.SetIcon(wx.Icon(GlobalVars.program_icon))
 
         # Local name
         local_name = Config.get_user_info('alias', 'local')
