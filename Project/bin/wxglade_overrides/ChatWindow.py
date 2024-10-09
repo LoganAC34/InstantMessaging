@@ -50,41 +50,12 @@ def Notification(title, message):
     update_popup.SetIcon(wx.Icon(GlobalVars.icon))
     update_popup.Show()
 
-
-def DownloadUpdate(url_download, temp_file):
-    print("Downloading updated file...")
-    # Download the current file
-    while True:
-        try:
-            temp = SpooledTemporaryFile()
-            session = requests.Session()
-            resp = session.get(url_download)
-            temp.write(resp.content)
-            temp.seek(0)
-
-            # Write to file
-            with open(temp_file, 'wb') as local_file:
-                local_file.write(resp.content)
-
-            # Set Update variable to True
-            with open(GlobalVars.pkl_update, 'wb') as f:
-                # noinspection PyTypeChecker
-                pickle.dump(True, f)
-
-            # Notification about update
-            Notification(title='Download Complete!', message="Close the program to use updated version.")
-            print("Done.")
-            break
-        except Exception as e:
-            print("Download failed. Trying again.")
-            print(e)
-            pass
+    return update_popup
 
 class MyFrame(ChatWindow):
     def __init__(self, *args, **kwds):
         ChatWindow.__init__(self, *args, **kwds)
         self.SetTitle(f"Chat Window - {GlobalVars.VERSION}")
-        self.update = None
 
         # Variables
         self.sent_to = ''
@@ -268,36 +239,7 @@ class MyFrame(ChatWindow):
     def OnClose(self, event):
         # self.queue_to_server.put("Command:Shutdown")
         self._persistMgr.SaveAndUnregister()
-
-        if self.update:
-            print("Update available")
-            # Copy Update script to temp folder
-            py_update = 'Update.exe'
-            src_script_path = os.path.join(GlobalVars.exe, 'Scripts', py_update)
-            dst_script_path = os.path.join(tempfile.gettempdir(), py_update)
-            print("Source: " + src_script_path)
-            print("Paste: " + dst_script_path)
-            shutil.copy(src_script_path, dst_script_path)
-
-            # Copy Notification icon to temp folder
-            src_icon_path = GlobalVars.icon
-            dst_icon_path = os.path.join(tempfile.gettempdir(), os.path.basename(GlobalVars.icon))
-            print("Source: " + src_icon_path)
-            print("Paste: " + dst_icon_path)
-            shutil.copy(src_icon_path, dst_icon_path)
-
-            # Update script
-            update_script = os.path.join(tempfile.gettempdir(), py_update)
-            subprocess.Popen([update_script,
-                              self.temp_file,
-                              GlobalVars.app_path, GlobalVars.app_path,  # One is current, other is new (same place).
-                              GlobalVars.pkl_update]
-                             )
-            print("Closing main app.")
-        else:
-            print("No update available")
         self.Destroy()
-
         event.Skip()
 
     def OnOpen(self, event):
@@ -416,23 +358,77 @@ class MyFrame(ChatWindow):
                 (current_version_major, current_version_minor, current_version_patch)
         )
         if is_new_version and 'Stable' in version_name:
+            print("Update available!")
+
+            # Download file
             self.temp_file = os.path.join(tempfile.gettempdir(), os.path.basename(url_download))
-
-            Notification(title='Downloading update...',
-                         message="There is an update available. Please wait for it to finish "
-                                 "downloading before closing the program")
-
-            if not GlobalVars.debug:
-                # Set Update variable to True
-                with open(GlobalVars.pkl_update, 'wb') as f:
-                    # noinspection PyTypeChecker
-                    pickle.dump(True, f)
-                self.update = True
-
-                # Download file
-                t = threading.Thread(target=DownloadUpdate, args=[url_download, self.temp_file])
-                t.daemon = True
-                t.start()
+            t = threading.Thread(target=self.DownloadUpdate, args=[url_download, self.temp_file])
+            t.daemon = True
+            t.start()
 
         else:
             print("Program is up to date!")
+
+    def DownloadUpdate(self, url_download, temp_file):
+        print("Downloading updated file...")
+        # Download the current file
+        while True:
+            try:
+                temp = SpooledTemporaryFile()
+                session = requests.Session()
+                resp = session.get(url_download)
+                temp.write(resp.content)
+                temp.seek(0)
+
+                if not GlobalVars.debug:
+                    # Write to file
+                    with open(temp_file, 'wb') as local_file:
+                        local_file.write(resp.content)
+
+                print("Done.")
+                break
+            except Exception as e:
+                print("Download failed. Trying again.")
+                print(e)
+                pass
+
+        if not GlobalVars.debug:
+            # Set Update variable to True
+            with open(GlobalVars.pkl_update, 'wb') as f:
+                # noinspection PyTypeChecker
+                pickle.dump(True, f)
+
+        # Notification about update
+        Notification(title='Update available!', message="Press the update button in the program to update.")
+
+        tool = self.ChatWindow_toolbar.AddTool(12, 'Update available!', wx.NullBitmap,
+                                               shortHelp="Click me to update!")
+        self.Bind(wx.EVT_TOOL, self.UpdateApp, id=tool.GetId())
+        self.ChatWindow_toolbar.Realize()
+
+    def UpdateApp(self, event):
+        if not GlobalVars.debug:
+            # Copy Update script to temp folder
+            py_update = 'Update.exe'
+            src_script_path = os.path.join(GlobalVars.exe, 'Scripts', py_update)
+            dst_script_path = os.path.join(tempfile.gettempdir(), py_update)
+            print("Source: " + src_script_path)
+            print("Paste: " + dst_script_path)
+            shutil.copy(src_script_path, dst_script_path)
+
+            # Copy Notification icon to temp folder
+            src_icon_path = GlobalVars.icon
+            dst_icon_path = os.path.join(tempfile.gettempdir(), os.path.basename(GlobalVars.icon))
+            print("Source: " + src_icon_path)
+            print("Paste: " + dst_icon_path)
+            shutil.copy(src_icon_path, dst_icon_path)
+
+            # Update script
+            update_script = os.path.join(tempfile.gettempdir(), py_update)
+            subprocess.Popen([update_script,
+                              self.temp_file,
+                              GlobalVars.app_path, GlobalVars.app_path,  # One is current, other is new (same place).
+                              GlobalVars.pkl_update]
+                             )
+        print("Closing main app.")
+        self.Destroy()
