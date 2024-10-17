@@ -19,11 +19,11 @@ import wx.html2
 import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
-from Project.bin.wxglade.ChatWindow import *
 
 from Project.bin.Scripts import Config
 from Project.bin.Scripts.Global import GlobalVars
 from Project.bin.Scripts.Server import SocketWorkerThread
+from Project.bin.wxglade.ChatWindow import *
 from Project.bin.wxglade_overrides import EasterEgg
 from Project.bin.wxglade_overrides import FrameSettings
 
@@ -54,6 +54,7 @@ def Notification(parent, title, message, high_priority: bool = False):
         icon = wx.Icon(GlobalVars.program_icon)
         update_popup.SetIcon(icon)
         update_popup.Show()
+        parent.RequestUserAttention(wx.USER_ATTENTION_INFO)
 
         return update_popup, icon
 
@@ -253,11 +254,6 @@ class MyFrame(ChatWindow):
         self.panel_send.Update()
         self.panel_send.Layout()
 
-        self.panel_chat_log.SetAutoLayout(True)
-        self.panel_chat_log.Refresh()
-        self.panel_chat_log.Update()
-        self.panel_chat_log.Layout()
-
     def OnClose(self, event):
         # self.queue_to_server.put("Command:Shutdown")
         self._persistMgr.SaveAndUnregister()
@@ -293,16 +289,22 @@ class MyFrame(ChatWindow):
 
         # print("Event handler 'UpdateStatus' not implemented!")
 
-    def on_script_message(self, event):
+    def OnScriptMessage(self, event):
         data = json.loads(event.String)
         print(data)
 
         if 'keyPress' in data:
-            print(data['keyPress'])
+            # print(data['keyPress'])
+            pass
         elif 'mouseDown' in data:
-            print(data['mouseDown'])
+            # print(data['mouseDown'])
+            pass
         elif 'wheel' in data:
-            print(data['wheel'])
+            # print(data['wheel'])
+            pass
+        elif 'imageClick' in data:
+            print(data['imageClick'])
+            pass
 
     def AppendMessage(self, username, message):
         self.AppendUsername(username)
