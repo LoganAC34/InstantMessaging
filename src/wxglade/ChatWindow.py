@@ -6,9 +6,9 @@
 import wx
 from wx import html2
 
-from Project.bin.Scripts.Global import GlobalVars
+from src.Scripts.Global import GlobalVars
 # begin wxGlade: extracode
-from Project.bin.wxglade_overrides.Spellchek_TextCtrl import SpellCheckTextCtrl
+from src.wxglade_overrides.Spellchek_TextCtrl import SpellCheckTextCtrl
 
 
 # begin wxGlade: dependencies

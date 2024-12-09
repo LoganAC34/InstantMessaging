@@ -1,7 +1,7 @@
 import yaml
 
-from Project.bin.Scripts.Global import GlobalVars
-from Project.bin.wxglade.EasterEgg import *
+from Scripts.Global import GlobalVars
+from wxglade.EasterEgg import *
 
 
 class EasterEggOverride(EasterEgg):

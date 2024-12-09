@@ -4,11 +4,11 @@ import sys
 
 import PyInstaller.__main__
 
-dir_PyCharm = os.path.abspath('../')
-dir_path = os.path.abspath('./bin')
+dir_PyCharm = os.path.abspath('.')
+dir_path = os.path.abspath('src')
 build = os.path.join(dir_PyCharm, 'build\\')
 
-dir_name = os.path.basename(os.path.abspath('../'))
+dir_name = os.path.basename(os.path.abspath('.'))
 dst = os.path.join('C:/Temp', dir_name)
 if os.path.isdir(dst):
     shutil.rmtree(dst)
@@ -37,8 +37,8 @@ PyInstaller.__main__.run([
     '--hidden-import', 'wx.adv',
     '--hidden-import', 'wx.xml',
     # '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2Loader.dll.lib;./wx',  # Don't need?
-    # '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2LoaderStatic.lib;./wx',  # Don't need?
-    '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2Loader.dll;./wx',  # Otherwise chat window doesn't show
+    # '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2LoaderStatic.lib;./wx', # Don't need?
+    '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2Loader.dll;./wx',  # Otherwise the chat window doesn't show
     '--add-data', f'{sys.prefix}/Lib/site-packages/enchant;./enchant',  # Otherwise enchant errors
     # '--debug=imports',
     '--add-data', rf'{dst};.'

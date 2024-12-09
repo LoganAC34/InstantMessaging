@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/src/env python3
 # -*- coding: UTF-8 -*-
 import base64
 import html
@@ -20,12 +20,10 @@ import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
 
-from Project.bin.Scripts import Config
-from Project.bin.Scripts.Global import GlobalVars
-from Project.bin.Scripts.Server import SocketWorkerThread
-from Project.bin.wxglade.ChatWindow import *
-from Project.bin.wxglade_overrides import EasterEgg
-from Project.bin.wxglade_overrides import FrameSettings
+from Scripts import Config
+from Scripts.Server import SocketWorkerThread
+from wxglade.ChatWindow import *
+from wxglade_overrides import EasterEgg, FrameSettings
 
 drop_event, EVT_DROP_EVENT = wx.lib.newevent.NewEvent()
 

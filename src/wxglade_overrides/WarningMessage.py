@@ -1,4 +1,4 @@
-from Project.bin.wxglade.ErrorDialog import *
+from wxglade.ErrorDialog import *
 
 
 class WaringMessage(ErrorDialog):

@@ -27,7 +27,7 @@ class GlobalVars(object):
         # we are running in a normal Python environment
         print('Not frozen')
         exe = os.path.abspath('./') + '\\'
-        app_path = os.path.abspath('../../Testing/Local_Instant_Messenger.exe')
+        app_path = os.path.abspath('../Testing/Local_Instant_Messenger.exe')
         my_data_dir = pathlib.Path(os.path.abspath('../Testing/Local_Instant_Messenger'))
         debug = True
 

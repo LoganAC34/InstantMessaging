@@ -9,8 +9,8 @@ from datetime import datetime
 
 from cryptography.fernet import Fernet
 
-from Project.bin.Scripts import Config
-from Project.bin.Scripts.Global import GlobalVars
+from Scripts import Config
+from Scripts.Global import GlobalVars
 
 
 def send_via_msg(remote_host, user, msg):

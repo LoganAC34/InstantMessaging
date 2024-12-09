@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/src/env python3
 # -*- coding: UTF-8 -*-
 import string
 
@@ -6,12 +6,10 @@ import wx.adv
 import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
-from Project.bin.wxglade.SettingsWindow import *
-
-from Project.bin.Scripts import Config
-from Project.bin.Scripts.Global import GlobalVars
-from Project.bin.wxglade_overrides import ChatWindow
-from Project.bin.wxglade_overrides import WarningMessage
+from wxglade.SettingsWindow import *
+from Scripts import Config
+from Scripts.Global import GlobalVars
+from wxglade_overrides import WarningMessage, ChatWindow
 
 
 class FrameSettings(SettingsWindow):

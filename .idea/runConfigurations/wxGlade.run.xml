@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="wxGlade" type="PythonConfigurationType" factoryName="Python">
-    <module name="Local Instant Messenger" />
+    <module name="pythonProject" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -8,13 +8,12 @@
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
     <option name="SDK_HOME" value="" />
-      <option name="SDK_NAME" value="Python 3.10 (LocalInstantMessenger)"/>
     <option name="WORKING_DIRECTORY" value="" />
-    <option name="IS_MODULE_SDK" value="false" />
+    <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
-    <option name="SCRIPT_NAME" value="$ContentRoot$/.venv/wxGlade-1.0.4/wxglade.py" />
-    <option name="PARAMETERS" value="&quot;$ContentRoot$\Project\bin\wxglade\wxglade.wxg&quot;" />
+    <option name="SCRIPT_NAME" value="$ProjectFileDir$/.venv/wxGlade-1.0.4/wxglade.py" />
+    <option name="PARAMETERS" value="&quot;$ProjectFileDir$\src\wxglade\wxglade.wxg&quot;" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

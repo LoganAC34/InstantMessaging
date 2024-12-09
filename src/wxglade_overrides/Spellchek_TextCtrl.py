@@ -3,7 +3,7 @@ import wx
 import wx.stc as stc
 from enchant.checker import SpellChecker
 
-from Project.bin.Scripts.Global import GlobalVars
+from Scripts.Global import GlobalVars
 
 
 class SpellCheckTextCtrl(stc.StyledTextCtrl):
