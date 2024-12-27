@@ -7,21 +7,20 @@ import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
 from wxglade.SettingsWindow import *
-from Scripts import Config
-from Scripts.Global import GlobalVars
-from wxglade_overrides import WarningMessage, ChatWindow
+from scripts import GlobalVars, config
+import wxglade_ex
 
 
-class FrameSettings(SettingsWindow):
+class SettingsWindowEx(SettingsWindow):
     def __init__(self, *args, **kwds):
         SettingsWindow.__init__(self, *args, **kwds)
         self.EditColors = None
         self.WarningMessage = None
-        self.server = ChatWindow.server
+        self.server = wxglade_ex.MainWindowEx.server
         self.SetIcon(wx.Icon(GlobalVars.program_icon))
 
         # Local name
-        local_name = Config.get_user_info('alias', 'local')
+        local_name = config.get_user_info('alias', 'local')
         self.text_ctrl_Local_Name.SetValue(local_name)
 
         # Character limits
@@ -35,7 +34,7 @@ class FrameSettings(SettingsWindow):
         self.text_ctrl_Local_Name.SetToolTip(self.tooltip)
 
         # Add users to UI
-        users = Config.get_user_count()
+        users = config.get_user_count()
         num = list(range(1, users + 1))
         for x in num:
             self.AddUser_UI(x)
@@ -45,7 +44,7 @@ class FrameSettings(SettingsWindow):
         pass  # TODO: implement this
         """
         if not self.EditColors:
-            self.EditColors = EditColors.FrameEditColors(self)
+            self.EditColors = EditColors.EditColorsWindowEx(self)
             self.EditColors.CentreOnParent()
             self.Disable()
             self.EditColors.Show()
@@ -82,9 +81,9 @@ class FrameSettings(SettingsWindow):
     def AddUser_UI(self, user_num):
         # If existing, get values:
         try:
-            device_name = Config.get_user_info('device_name', 'remote', user_num)
-            alias = Config.get_user_info('alias', 'remote', user_num)
-            alias_override = Config.get_user_info('override', 'remote', user_num)
+            device_name = config.get_user_info('device_name', 'remote', user_num)
+            alias = config.get_user_info('alias', 'remote', user_num)
+            alias_override = config.get_user_info('override', 'remote', user_num)
         except Exception as e:
             print(e)
             device_name = ''
@@ -156,7 +155,7 @@ class FrameSettings(SettingsWindow):
             self.sizer_RemoteUsers.Remove(sizer)
             self.sizer_RemoteUsers.Fit(self)
             self.sizer_Main.Fit(self)
-            Config.delete_user('remote', user_num)
+            config.delete_user('remote', user_num)
 
             for x, user in enumerate(users):
                 x += 1
@@ -191,7 +190,7 @@ class FrameSettings(SettingsWindow):
         all_good = self.CheckFields()
         if all_good:
             local_name = self.text_ctrl_Local_Name.GetValue()
-            Config.set_user_info('alias', local_name, 'local')
+            config.set_user_info('alias', local_name, 'local')
 
             # Get settings attributes
             users = self.sizer_RemoteUsers.GetChildren()
@@ -201,9 +200,9 @@ class FrameSettings(SettingsWindow):
                 user_Alias = sizer.Sizer.GetChildren()[1].Sizer.GetChildren()[1].GetWindow().GetValue()
                 user_Override = sizer.Sizer.GetChildren()[2].GetWindow().GetValue()
                 x += 1
-                Config.set_user_info('device_name', user_DeviceName, 'remote', x)
-                Config.set_user_info('alias', user_Alias, 'remote', x)
-                Config.set_user_info('override', user_Override, 'remote', x)
+                config.set_user_info('device_name', user_DeviceName, 'remote', x)
+                config.set_user_info('alias', user_Alias, 'remote', x)
+                config.set_user_info('override', user_Override, 'remote', x)
                 print(f'REMOTE_USER_{x} | {user_DeviceName} | {user_Alias} | {str(user_Override)}')
 
             GlobalVars.queue_server_and_app.put({'function': 'update_variables', 'args': ''})
@@ -211,7 +210,7 @@ class FrameSettings(SettingsWindow):
         else:
             print("Not good")
             if not self.WarningMessage:
-                self.WarningMessage = WarningMessage.WaringMessage(self)
+                self.WarningMessage = wxglade_ex.ErrorDialogWindowEx(self)
                 self.WarningMessage.CentreOnParent()
             self.Disable()
             self.WarningMessage.Show()

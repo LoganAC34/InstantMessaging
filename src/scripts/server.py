@@ -9,8 +9,7 @@ from datetime import datetime
 
 from cryptography.fernet import Fernet
 
-from Scripts import Config
-from Scripts.Global import GlobalVars
+from . import config, GlobalVars
 
 
 def send_via_msg(remote_host, user, msg):
@@ -195,9 +194,9 @@ class SocketWorkerThread(threading.Thread):
         # print(self.out_data_queue)
 
     def update_variables(self):
-        self.remote_host = Config.get_user_info('device_name', 'remote')
-        self.remote_name = Config.get_user_info('alias', 'remote')
-        self.remote_override = Config.get_user_info('override', 'remote')
-        self.local_name = Config.get_user_info('alias', 'local')
+        self.remote_host = config.get_user_info('device_name', 'remote')
+        self.remote_name = config.get_user_info('alias', 'remote')
+        self.remote_override = config.get_user_info('override', 'remote')
+        self.local_name = config.get_user_info('alias', 'local')
         print("Local PC: " + self.local_host + " - " + self.local_name)
         print("Remote PC: " + self.remote_host + " - " + self.remote_name)

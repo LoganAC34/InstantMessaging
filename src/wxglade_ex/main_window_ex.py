@@ -20,14 +20,12 @@ import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
 
-from Scripts import Config
-from Scripts.Server import SocketWorkerThread
-from wxglade.ChatWindow import *
-from wxglade_overrides import EasterEgg, FrameSettings
+from scripts import config, SocketWorkerThread, GlobalVars
+from wxglade import MainWindow
+from wxglade_ex import EastereggWindowEx, SettingsWindowEx
 
 drop_event, EVT_DROP_EVENT = wx.lib.newevent.NewEvent()
 
-# Server
 server = SocketWorkerThread(GlobalVars.queue_server_and_app)
 
 class MyFileDropTarget(wx.FileDropTarget):
@@ -45,7 +43,7 @@ class MyFileDropTarget(wx.FileDropTarget):
         return True
 
 
-def Notification(parent, title, message, high_priority: bool = False):
+def notify(parent, title, message, high_priority: bool = False):
     app_unfocused = not parent.IsActive()
     if app_unfocused or high_priority:
         update_popup = wx.adv.NotificationMessage(title=title, message=message)
@@ -56,9 +54,12 @@ def Notification(parent, title, message, high_priority: bool = False):
 
         return update_popup, icon
 
-class MyFrame(ChatWindow):
+
+class MainWindowEx(MainWindow):
+    server = server
+
     def __init__(self, *args, **kwds):
-        ChatWindow.__init__(self, *args, **kwds)
+        MainWindow.__init__(self, *args, **kwds)
         self.SetTitle(f"Chat Window - {GlobalVars.VERSION}")
 
         # Variables
@@ -81,7 +82,7 @@ class MyFrame(ChatWindow):
 
         # Create a config file if one doesn't exist
         if not os.path.exists(GlobalVars.cfgFile_path):
-            Config.create_template()
+            config.create_template()
 
         # Server - Check for messages
         self.queue_server_and_app = GlobalVars.queue_server_and_app
@@ -122,7 +123,7 @@ class MyFrame(ChatWindow):
 
     @staticmethod
     def SentTyping():
-        server.typing(Config.get_user_info('alias', 'local'))
+        server.typing(config.get_user_info('alias', 'local'))
 
     # noinspection PyUnusedLocal
     def HandleServer(self, event):
@@ -142,13 +143,13 @@ class MyFrame(ChatWindow):
                 message = args['message']
                 self.AppendMessage(username, message)
                 app = wx.TopLevelWindow()
-                Notification(self, username, message)
+                notify(self, username, message)
             elif function == 'image':
                 username = args['user']
                 image_data = args['image']
                 print("Received image:" + image_data)
                 self.AppendImage(username, image_data)
-                Notification(self, username, "You received an image.")
+                notify(self, username, "You received an image.")
             elif function == 'status':
                 self.UpdateStatus('sent to', args)
             elif function == 'update_variables':
@@ -162,7 +163,7 @@ class MyFrame(ChatWindow):
 
     def OpenSettings(self, event):
         if not self.SettingsWindow:
-            self.SettingsWindow = FrameSettings.FrameSettings(self)
+            self.SettingsWindow = SettingsWindowEx(self)
             self.SettingsWindow.CentreOnParent()
             self.Disable()
             self.SettingsWindow.Show()
@@ -176,7 +177,7 @@ class MyFrame(ChatWindow):
         self.CheckConnection(self)
         message = self.text_ctrl_message.GetValue()
         if message and len(message) <= GlobalVars.maxCharacterLength:
-            PC_Local_Name = Config.get_user_info('alias', 'local')
+            PC_Local_Name = config.get_user_info('alias', 'local')
             self.AppendMessage(PC_Local_Name, message)
             server.send_message(PC_Local_Name, message)
             self.text_ctrl_message.ClearAll()
@@ -195,7 +196,7 @@ class MyFrame(ChatWindow):
             with open(image_path, "rb") as image_file:
                 image_data = base64.b64encode(image_file.read()).decode('utf-8')
 
-            PC_Local_Name = Config.get_user_info('alias', 'local')
+            PC_Local_Name = config.get_user_info('alias', 'local')
             self.AppendImage(PC_Local_Name, image_data)
 
             self.CheckConnection(self)
@@ -235,7 +236,7 @@ class MyFrame(ChatWindow):
     # noinspection PyUnusedLocal
     @staticmethod
     def CheckConnection(self):
-        server.connection_status(Config.get_user_info('alias', 'local'))
+        server.connection_status(config.get_user_info('alias', 'local'))
 
     def CheckConnection_Stop(self, event):
         # print("Stopped checking server connection.")
@@ -327,7 +328,7 @@ class MyFrame(ChatWindow):
 
     def EasterEgg(self, event):
         if GlobalVars.debug and not self.EasterEggWindow:
-            self.EasterEggWindow = EasterEgg.EasterEggOverride(self)
+            self.EasterEggWindow = EastereggWindowEx(self)
             self.EasterEggWindow.Show()
             event.Skip()
         else:
@@ -350,7 +351,7 @@ class MyFrame(ChatWindow):
                 while line := file.readline():
                     fortunes.append(line.rstrip())
 
-            PC_Local_Name = Config.get_user_info('alias', 'local')
+            PC_Local_Name = config.get_user_info('alias', 'local')
             fortune_name = 'Fortune Teller'  # 'System'
             num = random.randint(0, len(fortunes))
             while True:
@@ -442,10 +443,10 @@ class MyFrame(ChatWindow):
                 pickle.dump(True, f)
 
         # Notification about update
-        notification, icon = Notification(self,
-                                          title='Update available!',
-                                          message="Press the update button in the program to update.",
-                                          high_priority=True)
+        notification, icon = notify(self,
+                                    title='Update available!',
+                                    message="Press the update button in the program to update.",
+                                    high_priority=True)
         self.update_notification = [notification, icon]
 
         tool = self.ChatWindow_toolbar.AddTool(12, 'Update available!', wx.NullBitmap,
@@ -457,7 +458,7 @@ class MyFrame(ChatWindow):
         if not GlobalVars.debug:
             # Copy Update script to temp folder
             py_update = 'Update.exe'
-            src_script_path = os.path.join(GlobalVars.exe, 'Scripts', py_update)
+            src_script_path = os.path.join(GlobalVars.exe, 'scripts', py_update)
             dst_script_path = os.path.join(tempfile.gettempdir(), py_update)
             print("Source: " + src_script_path)
             print("Paste: " + dst_script_path)

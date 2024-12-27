@@ -1,15 +1,16 @@
 import yaml
+import wx
 
-from Scripts.Global import GlobalVars
-from wxglade.EasterEgg import *
+from scripts import GlobalVars
+from wxglade import EastereggWindow
 
 
-class EasterEggOverride(EasterEgg):
+class EastereggWindowEx(EastereggWindow):
     def __init__(self, *args, **kwds):
-        EasterEgg.__init__(self, *args, **kwds)
+        EastereggWindow.__init__(self, *args, **kwds)
 
         # Load the JSON file containing the game data
-        yaml_file = GlobalVars.exe + r'Resources\EasterEgg.yaml'
+        yaml_file = GlobalVars.exe + r'resources\EasterEgg.yaml'
         with open(yaml_file) as f:
             self.hints_and_answers = yaml.safe_load(f)['hints']
 
@@ -43,13 +44,13 @@ class EasterEggOverride(EasterEgg):
             # print("Shift + Enter")
             event.Skip()
         elif unicodeKey == wx.WXK_RETURN and len(message) > 0:
-            # Hitting enter with message content
+            # Hitting ENTER with message content
             # print("Just Enter with message")
             # self.TypeString('\n\nYou: ' + message)
             self.Processing(message)
             self.Input.Clear()
         elif unicodeKey == wx.WXK_RETURN and len(message) == 0:
-            # Prevents sending blank message when hitting enter twice.
+            # Prevents sending a blank message when hitting enter twice.
             # print("Just Enter")
             pass
         elif keycode in GlobalVars.allowed_keys:

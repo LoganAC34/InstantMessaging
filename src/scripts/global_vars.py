@@ -42,8 +42,8 @@ class GlobalVars(object):
     lockfile = my_data_dir / 'program.lock'
 
     # Global Variables
-    program_icon = os.path.join(exe, 'Resources', 'Local_Instant_Messenger.ico')
-    company_logo = os.path.join(exe, 'Resources', 'OrangeByte_Logo.png')
+    program_icon = os.path.join(exe, 'resources', 'Local_Instant_Messenger.ico')
+    company_logo = os.path.join(exe, 'resources', 'OrangeByte_Logo.png')
     maxCharacterLength = 256
     lineBreak = '\r'
     allowed_keys = [8, 127, 305, 312, 313, 314, 315, 316, 317, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 364,
@@ -56,6 +56,6 @@ class GlobalVars(object):
     queue_server_and_app = queue.Queue()
 
     # Chat log HTML template
-    edge_webview_installer = os.path.join(exe, 'Resources', 'MicrosoftEdgeWebview2Setup.exe')
-    html_template_path = os.path.join(exe, 'Resources', 'message_log_template.html')
+    edge_webview_installer = os.path.join(exe, 'resources', 'MicrosoftEdgeWebview2Setup.exe')
+    html_template_path = os.path.join(exe, 'resources', 'message_log_template.html')
     html_template_code = open(html_template_path).read()

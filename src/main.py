@@ -1,11 +1,14 @@
 #!/usr/src/env python3
 # -*- coding: UTF-8 -*-
+import os
+import subprocess
 import winreg
+import wx
 
 import psutil
 
-from wxglade_overrides.ChatWindow import *
-from wxglade_overrides.FrameSettings import *
+from scripts import GlobalVars
+from wxglade_ex import MainWindowEx
 
 
 def is_program_running():
@@ -52,10 +55,10 @@ def install_edge_browser():
         print("Failed to install Edge WebView2:", e)
 
 
-class MyApp(wx.App):
+class MainApp(wx.App):
     def __init__(self):
         super().__init__(False, None, False, True)
-        self.ChatWindow = None
+        self.MainWindowElement = None
 
 
     def OnInit(self):
@@ -70,9 +73,9 @@ class MyApp(wx.App):
 
             # install_edge_browser() # Not needed?
 
-            self.ChatWindow = MyFrame(None, wx.ID_ANY, "")
-            self.SetTopWindow(self.ChatWindow)
-            self.ChatWindow.Show()
+            self.MainWindowElement = MainWindowEx(None, wx.ID_ANY, "")
+            self.SetTopWindow(self.MainWindowElement)
+            self.MainWindowElement.Show()
             return True
         except Exception as e:
             print("An error occurred during initialization:", e)
@@ -87,5 +90,5 @@ class MyApp(wx.App):
         return 0
 
 if __name__ == "__main__":
-    app = MyApp()
+    app = MainApp()
     app.MainLoop()

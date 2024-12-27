@@ -16,10 +16,10 @@ shutil.copytree(dir_path, dst)
 
 # Update script
 PyInstaller.__main__.run([
-    os.path.join(dst, r'Scripts/Update.py'),
+    os.path.join(dst, r'scripts/update.py'),
     '--workpath', build,
     '--specpath', build,
-    '--distpath', os.path.join(dst, 'Scripts'),
+    '--distpath', os.path.join(dst, 'scripts'),
     '--noconsole',
     '-F'
 ])
@@ -33,7 +33,7 @@ PyInstaller.__main__.run([
     '--distpath', dir_PyCharm,
     '-F',
     '--noconsole',  # Comment out for console to appear when running app
-    '--icon', os.path.join(dir_path, 'Resources', 'Local_Instant_Messenger.ico'),
+    '--icon', os.path.join(dir_path, 'resources', 'Local_Instant_Messenger.ico'),
     '--hidden-import', 'wx.adv',
     '--hidden-import', 'wx.xml',
     # '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2Loader.dll.lib;./wx',  # Don't need?

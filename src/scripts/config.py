@@ -1,6 +1,6 @@
 import configparser
 
-from Scripts.Global import GlobalVars
+from .global_vars import GlobalVars
 
 
 def get_user(user, num=1):

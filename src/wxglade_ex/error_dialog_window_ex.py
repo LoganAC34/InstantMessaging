@@ -1,9 +1,9 @@
-from wxglade.ErrorDialog import *
+from wxglade import ErrorDialogWindow
 
 
-class WaringMessage(ErrorDialog):
+class ErrorDialogWindowEx(ErrorDialogWindow):
     def __init__(self, *args, **kwds):
-        ErrorDialog.__init__(self, *args, **kwds)
+        ErrorDialogWindow.__init__(self, *args, **kwds)
 
     def OnClose(self, event):
         self.Parent.Enable()

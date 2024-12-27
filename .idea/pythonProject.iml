@@ -13,8 +13,9 @@
   <component name="PyNamespacePackagesService">
     <option name="namespacePackageFolders">
       <list>
-        <option value="$MODULE_DIR$/src/wxglade_overrides" />
+        <option value="$MODULE_DIR$/src/wxglade_ex" />
         <option value="$MODULE_DIR$/src/wxglade" />
+        <option value="$MODULE_DIR$/src/scripts" />
       </list>
     </option>
   </component>
