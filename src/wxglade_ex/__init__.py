@@ -7,6 +7,7 @@ from .error_dialog_window_ex import ErrorDialogWindowEx
 from .image_viewer_window_ex import ImageViewerWindowEx
 from .main_window_ex import MainWindowEx, MyFileDropTarget
 from .spellcheck_textctrl import SpellCheckTextCtrl
+from .about_window_ex import AboutWindowEx
 
 __all__ = [
     'EastereggWindowEx',
@@ -16,5 +17,6 @@ __all__ = [
     'ImageViewerWindowEx',
     'MainWindowEx',
     'MyFileDropTarget',
-    'SpellCheckTextCtrl'
+    'SpellCheckTextCtrl',
+    'AboutWindowEx'
 ]

@@ -7,6 +7,7 @@ from .EditColorsWindow import EditColorsWindow
 from .EastereggWindow import EastereggWindow
 from .ImageViewerWindow import ImageViewerWindow
 from .EmojiSelectorWindow import EmojiSelectorWindow
+from .AboutWindow import AboutWindow
 
 __all__ = [
     'MainWindow',
@@ -15,5 +16,6 @@ __all__ = [
     'EditColorsWindow',
     'EastereggWindow',
     'ImageViewerWindow',
-    'EmojiSelectorWindow'
+    'EmojiSelectorWindow',
+    'AboutWindow'
 ]

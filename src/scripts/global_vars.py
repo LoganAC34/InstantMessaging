@@ -7,8 +7,14 @@ import sys
 class GlobalVars(object):
     # TODO: update version number
     # Update changelog!!!
+    APP_NAME = 'Local Instant Messenger'
+    APP_NAME_UNDERSCORE = APP_NAME.replace(' ', '_')
     PUBLISHER = 'OrangeByte'
     VERSION = 'v4.0.1'
+    PYTHON_BUILD_VERSION = f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}'
+    GITHUB_REPO_LINK = 'https://github.com/LoganAC34/InstantMessaging'
+    AUTHOR = 'LoganAC34'
+    AUTHOR_LINK = 'https://github.com/LoganAC34'
     # MAJOR version when you make incompatible API changes
     # MINOR version when you add functionality in a backwards compatible manner
     # PATCH version when you make backwards compatible bug fixes
@@ -21,19 +27,23 @@ class GlobalVars(object):
         # noinspection PyProtectedMember
         exe = sys._MEIPASS + '\\'
         app_path = sys.executable
-        my_data_dir = pathlib.Path.home() / 'AppData/Roaming' / "Local_Instant_Messenger"
+        my_data_dir = pathlib.Path.home() / 'AppData/Roaming' / APP_NAME_UNDERSCORE
         debug = False
     else:
         # we are running in a normal Python environment
         print('Not frozen')
         exe = os.path.abspath('./') + '\\'
-        app_path = os.path.abspath('../Testing/Local_Instant_Messenger.exe')
-        my_data_dir = pathlib.Path(os.path.abspath('../Testing/Local_Instant_Messenger'))
+        app_path = os.path.abspath(f'../Testing/{APP_NAME_UNDERSCORE}.exe')
+        my_data_dir = pathlib.Path(os.path.abspath(f'../Testing/{APP_NAME_UNDERSCORE}'))
         debug = True
+
+    with open(os.path.join(exe, 'resources', 'build_date.txt')) as f:
+        BUILD_DATE = f.read().strip()
 
     # Home directory
     if not os.path.isdir(my_data_dir):
         my_data_dir.mkdir(parents=True)
+
 
     # Pickle variable files
     pkl_sha = my_data_dir / 'sha.pkl'
@@ -43,6 +53,7 @@ class GlobalVars(object):
 
     # Global Variables
     program_icon = os.path.join(exe, 'resources', 'Local_Instant_Messenger.ico')
+    program_image = os.path.join(exe, 'resources', 'vector-chat-icon-png_302635.png')
     company_logo = os.path.join(exe, 'resources', 'OrangeByte_Logo.png')
     maxCharacterLength = 256
     lineBreak = '\r'

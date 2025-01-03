@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+from datetime import date
 
 import PyInstaller.__main__
 
@@ -13,6 +14,10 @@ dst = os.path.join('C:/Temp', dir_name)
 if os.path.isdir(dst):
     shutil.rmtree(dst)
 shutil.copytree(dir_path, dst)
+
+# Create file with build date
+with open(os.path.join(dir_path, 'resources/build_date.txt'), 'w') as f:
+    f.write(date.today().strftime('%B {}, %Y'.format(date.today().day)))
 
 # Update script
 PyInstaller.__main__.run([

@@ -6,14 +6,15 @@ import wx.adv
 import wx.lib.agw.persist
 import wx.lib.newevent
 import wx.richtext
-from wxglade.SettingsWindow import *
 from scripts import GlobalVars, config
+from wxglade.SettingsWindow import *
 import wxglade_ex
 
 
 class SettingsWindowEx(SettingsWindow):
     def __init__(self, *args, **kwds):
         SettingsWindow.__init__(self, *args, **kwds)
+        self.AboutWindow = None
         self.EditColors = None
         self.WarningMessage = None
         self.server = wxglade_ex.MainWindowEx.server
@@ -39,8 +40,8 @@ class SettingsWindowEx(SettingsWindow):
         for x in num:
             self.AddUser_UI(x)
 
-    def On_EditColors(self, event):  # wxGlade: SettingsWindow.<event_handler>
-        print("Event handler 'On_EditColors' not implemented!")
+    def on_click_edit_colors(self, event):  # wxGlade: SettingsWindow.<event_handler>
+        print("Event handler 'on_click_edit_colors' not implemented!")
         pass  # TODO: implement this
         """
         if not self.EditColors:
@@ -50,6 +51,14 @@ class SettingsWindowEx(SettingsWindow):
             self.EditColors.Show()
             event.Skip()
         """
+
+    def on_click_about(self, event):  # wxGlade: SettingsWindow.<event_handler>
+        if not self.AboutWindow:
+            self.AboutWindow = wxglade_ex.AboutWindowEx(self)
+            self.AboutWindow.CentreOnParent()
+            self.Disable()
+            self.AboutWindow.Show()
+            event.Skip()
 
     def OnChar(self, event):
         key_code = event.GetKeyCode()

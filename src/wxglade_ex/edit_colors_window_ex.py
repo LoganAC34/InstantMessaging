@@ -1,31 +1,33 @@
 from wxglade import EditColorsWindow
 
 class EditColorsWindowEx(EditColorsWindow):
+    preset_color_themes = {
+        "Light Theme": {
+            "Chat Log Text Color": (0, 0, 0),
+            "Chat Log Background Color": (255, 255, 255),
+            "Message Box Text Color": (0, 0, 0),
+            "Message Box Color": (255, 255, 255),
+            "App Text Color": (0, 0, 0),
+            "App Background Color": (240, 240, 240),
+            "Button Text Color": (0, 0, 0),
+            "Button Color": (229, 241, 251)
+
+        },
+        "Dark Theme": {
+            "Chat Log Text Color": (255, 255, 255),
+            "Chat Log Background Color": (81, 81, 81),
+            "Message Box Text Color": (0, 0, 0),
+            "Message Box Color": (255, 255, 255),
+            "App Text Color": (0, 0, 0),
+            "App Background Color": (81, 81, 81),
+            "Button Text Color": (0, 0, 0),
+            "Button Color": (229, 241, 251)
+        }
+    }
+
     def __init__(self, *args, **kwds):
         EditColorsWindow.__init__(self, *args, **kwds)
-        self.preset_color_themes = {
-            "Light Theme": {
-                "Chat Log Text Color": (0, 0, 0),
-                "Chat Log Background Color": (255, 255, 255),
-                "Message Box Text Color": (0, 0, 0),
-                "Message Box Color": (255, 255, 255),
-                "App Text Color": (0, 0, 0),
-                "App Background Color": (240, 240, 240),
-                "Button Text Color": (0, 0, 0),
-                "Button Color": (229, 241, 251)
-
-            },
-            "Dark Theme": {
-                "Chat Log Text Color": (255, 255, 255),
-                "Chat Log Background Color": (81, 81, 81),
-                "Message Box Text Color": (0, 0, 0),
-                "Message Box Color": (255, 255, 255),
-                "App Text Color": (0, 0, 0),
-                "App Background Color": (81, 81, 81),
-                "Button Text Color": (0, 0, 0),
-                "Button Color": (229, 241, 251)
-            }
-        }
+        self.current_theme = None
 
     def On_Preset(self, event):  # wxGlade: EditColors.<event_handler>
         print("Event handler 'On_Preset' not implemented!")
@@ -43,6 +45,7 @@ class EditColorsWindowEx(EditColorsWindow):
             print(f"Pre-made Preset: {button_text}")
         else:
             print(button_text)
+        self.current_theme = button_text
 
         # Set colors
         for color in self.sizer_Colors.Children:
