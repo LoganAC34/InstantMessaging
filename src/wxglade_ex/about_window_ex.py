@@ -6,7 +6,7 @@ from scripts import GlobalVars
 from wxglade import AboutWindow
 from wxglade_ex import EditColorsWindowEx
 
-
+# https://docs.wxpython.org/richtextctrl_overview.html
 class AboutWindowEx(AboutWindow):
     def __init__(self, *args, **kwds):
         AboutWindow.__init__(self, *args, **kwds)

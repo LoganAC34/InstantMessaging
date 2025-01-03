@@ -21,7 +21,7 @@
             width: auto;
             word-wrap: break-word;
         }
-        .message p {
+        .message pre {
             margin: 0; /* Reset paragraph margin */
         }
 
@@ -58,16 +58,14 @@
             var isScrolledToBottom = checkScrolledToBottom();
             var message_div = document.createElement('div');
             message_div.className = 'message';
-            var message_p = document.createElement('p');
+            var message_pre = document.createElement('pre');
 
             // Use DOMParser to parse the message text as HTML and extract the text content
             var parser = new DOMParser();
             var doc = parser.parseFromString(message, 'text/html');
-            message_p.textContent = doc.body.textContent;
+            message_pre.textContent = doc.body.textContent;
 
-            message_p.textContent = doc.body.textContent;
-            // message_p.innerText = message;
-            message_div.appendChild(message_p);
+            message_div.appendChild(message_pre);
             document.body.appendChild(message_div);
             scrollToBottom(isScrolledToBottom);
         }
