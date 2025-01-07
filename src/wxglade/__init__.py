@@ -6,7 +6,6 @@ from .UserTemplatePanel import UserTemplatePanel
 from .EditColorsWindow import EditColorsWindow
 from .EastereggWindow import EastereggWindow
 from .ImageViewerWindow import ImageViewerWindow
-from .EmojiSelectorWindow import EmojiSelectorWindow
 from .AboutWindow import AboutWindow
 
 __all__ = [
@@ -14,8 +13,7 @@ __all__ = [
     'ErrorDialogWindow',
     'UserTemplatePanel',
     'EditColorsWindow',
-    'EastereggWindow',
-    'ImageViewerWindow',
     'EmojiSelectorWindow',
+    'ImageViewerWindow',
     'AboutWindow'
 ]

@@ -22,7 +22,7 @@ import wx.richtext
 
 from scripts import config, SocketWorkerThread, GlobalVars
 from wxglade import MainWindow
-from wxglade_ex import EastereggWindowEx, SettingsWindowEx
+from wxglade_ex import EastereggWindowEx, SettingsWindowEx, EmojiSelectorWindowEx
 
 drop_event, EVT_DROP_EVENT = wx.lib.newevent.NewEvent()
 
@@ -66,6 +66,10 @@ class MainWindowEx(MainWindow):
         self.sent_to = ''
         self.previous_sender = None
         self.SettingsWindow = None
+
+        # Initialize emoji selector
+        self.EmojisWindow = EmojiSelectorWindowEx(self)
+
         self.EasterEggWindow = None
         self.characters = 0
         # self.SetDoubleBuffered(True)
@@ -160,6 +164,8 @@ class MainWindowEx(MainWindow):
                 self.timer_typing.Start(2000, oneShot=True)
                 if self.TypingUser.Label != typing_status:
                     self.TypingUser.SetLabel(typing_status)
+            elif function == 'emoji_selector_updated':
+                self.emoji_keyboard.Enable()
 
     def OpenSettings(self, event):
         if not self.SettingsWindow:
@@ -168,6 +174,11 @@ class MainWindowEx(MainWindow):
             self.Disable()
             self.SettingsWindow.Show()
             event.Skip()
+
+    def OpenEmojis(self, event):
+        self.EmojisWindow.CentreOnParent()
+        self.EmojisWindow.Show()
+        event.Skip()
 
     def ClearChat(self, event):
         self.previous_sender = None

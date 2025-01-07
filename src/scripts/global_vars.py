@@ -2,7 +2,7 @@ import os
 import pathlib
 import queue
 import sys
-
+from fontTools import ttLib
 
 class GlobalVars(object):
     # TODO: update version number
@@ -37,7 +37,9 @@ class GlobalVars(object):
         my_data_dir = pathlib.Path(os.path.abspath(f'../Testing/{APP_NAME_UNDERSCORE}'))
         debug = True
 
-    with open(os.path.join(exe, 'resources', 'build_date.txt')) as f:
+    path_resources = os.path.join(exe, 'resources')
+
+    with open(os.path.join(path_resources, 'build_date.txt')) as f:
         BUILD_DATE = f.read().strip()
 
     # Home directory
@@ -52,9 +54,11 @@ class GlobalVars(object):
     lockfile = my_data_dir / 'program.lock'
 
     # Global Variables
-    program_icon = os.path.join(exe, 'resources', 'Local_Instant_Messenger.ico')
-    program_image = os.path.join(exe, 'resources', 'vector-chat-icon-png_302635.png')
-    company_logo = os.path.join(exe, 'resources', 'OrangeByte_Logo.png')
+    program_icon = os.path.join(path_resources, 'Local_Instant_Messenger.ico')
+    program_image = os.path.join(path_resources, 'vector-chat-icon-png_302635.png')
+    company_logo = os.path.join(path_resources, 'OrangeByte_Logo.png')
+    emoji_font = os.path.join(path_resources, 'NotoColorEmoji.ttf')  # https://github.com/googlefonts/noto-emoji/tree/main?tab=readme-ov-file
+    emoji_font_name = ttLib.TTFont(emoji_font)['name'].getDebugName(1)
     maxCharacterLength = 256
     lineBreak = '\r'
     allowed_keys = [8, 127, 305, 312, 313, 314, 315, 316, 317, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 364,
@@ -67,6 +71,6 @@ class GlobalVars(object):
     queue_server_and_app = queue.Queue()
 
     # Chat log HTML template
-    edge_webview_installer = os.path.join(exe, 'resources', 'MicrosoftEdgeWebview2Setup.exe')
-    html_template_path = os.path.join(exe, 'resources', 'message_log_template.html')
+    edge_webview_installer = os.path.join(path_resources, 'MicrosoftEdgeWebview2Setup.exe')
+    html_template_path = os.path.join(path_resources, 'message_log_template.html')
     html_template_code = open(html_template_path).read()
