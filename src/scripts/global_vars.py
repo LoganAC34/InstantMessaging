@@ -10,7 +10,7 @@ class GlobalVars(object):
     APP_NAME = 'Local Instant Messenger'
     APP_NAME_UNDERSCORE = APP_NAME.replace(' ', '_')
     PUBLISHER = 'OrangeByte'
-    VERSION = 'v4.0.2'
+    VERSION = 'v4.1.0'
     PYTHON_BUILD_VERSION = f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}'
     GITHUB_REPO_LINK = 'https://github.com/LoganAC34/InstantMessaging'
     AUTHOR = 'LoganAC34'
@@ -66,6 +66,10 @@ class GlobalVars(object):
 
     cfgFile_path = os.path.join(my_data_dir, 'config.cfg')  # Config file
     pwl_path = os.path.join(my_data_dir, 'user_dictionary.txt')  # Personal dictionary
+
+    emoji_directory = pathlib.Path(os.path.join(my_data_dir, "emojis"))
+    if not os.path.isdir(emoji_directory):
+        emoji_directory.mkdir(parents=True)
 
     # Server
     queue_server_and_app = queue.Queue()

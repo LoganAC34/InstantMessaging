@@ -2,10 +2,21 @@
 <html>
 <head>
     <style>
+        @font-face {
+          font-family: 'Noto Color Emoji';
+          src: url('https://raw.githubusercontent.com/googlefonts/noto-emoji/main/fonts/NotoColorEmoji.ttf') format('truetype')
+
+        }
+
+        .emoji {
+            font-family: 'Noto Color Emoji', sans-serif
+        }
+
         body {
             background-color: #121212;
             overflow-y: scroll;
         }
+
         .message {
             margin-left: 15px;
             margin-bottom: 10px;
@@ -20,9 +31,12 @@
             border-radius: 4px;
             width: auto;
             word-wrap: break-word;
+            font-family: sans-serif, 'Noto Color Emoji'
         }
+
         .message pre {
             margin: 0; /* Reset paragraph margin */
+            font-family: sans-serif, 'Noto Color Emoji'
         }
 
         .image-container img {

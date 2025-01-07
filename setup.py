@@ -45,6 +45,7 @@ PyInstaller.__main__.run([
     # '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2LoaderStatic.lib;./wx', # Don't need?
     '--add-data', f'{sys.prefix}/Lib/site-packages/wx/WebView2Loader.dll;./wx',  # Otherwise the chat window doesn't show
     '--add-data', f'{sys.prefix}/Lib/site-packages/enchant;./enchant',  # Otherwise enchant errors
+    '--add-data', f'{sys.prefix}/Lib/site-packages/emoji;./emoji',  # Otherwise emoji errors
     # '--debug=imports',
     '--add-data', rf'{dst};.'
 ])

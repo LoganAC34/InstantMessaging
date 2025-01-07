@@ -13,6 +13,7 @@ import tempfile
 import threading
 from tempfile import SpooledTemporaryFile
 
+import emoji
 import requests
 import wx.adv
 import wx.html2
@@ -55,6 +56,11 @@ def notify(parent, title, message, high_priority: bool = False):
         return update_popup, icon
 
 
+def convert_emojis_to_unicode(message):
+    message = emoji.emojize(message, language='alias')
+    return message
+
+
 class MainWindowEx(MainWindow):
     server = server
 
@@ -69,6 +75,9 @@ class MainWindowEx(MainWindow):
 
         # Initialize emoji selector
         self.EmojisWindow = EmojiSelectorWindowEx(self)
+        emoji_files = list(GlobalVars.emoji_directory.glob('*.png'))
+        if emoji_files:
+            self.emoji_keyboard.SetBitmap(wx.Bitmap(str(emoji_files[0])))
 
         self.EasterEggWindow = None
         self.characters = 0
@@ -164,8 +173,17 @@ class MainWindowEx(MainWindow):
                 self.timer_typing.Start(2000, oneShot=True)
                 if self.TypingUser.Label != typing_status:
                     self.TypingUser.SetLabel(typing_status)
-            elif function == 'emoji_selector_updated':
-                self.emoji_keyboard.Enable()
+            elif function == 'emoji_selected':
+                emoji_name = args
+
+                clipdata = wx.TextDataObject()
+                clipdata.SetText(emoji_name)
+                wx.TheClipboard.Open()
+                wx.TheClipboard.SetData(clipdata)
+                wx.TheClipboard.Close()
+                can_add_emoji = self.text_ctrl_message.Paste()\
+
+                self.text_ctrl_message.SetFocus()
 
     def OpenSettings(self, event):
         if not self.SettingsWindow:
@@ -318,6 +336,7 @@ class MainWindowEx(MainWindow):
 
     def AppendMessage(self, username, message):
         self.AppendUsername(username)
+        message = convert_emojis_to_unicode(message)
         message = html.escape(message)
         self.html_chat_log.RunScript(f'window.insertMessage({json.dumps(message)})')
 

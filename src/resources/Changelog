@@ -1,4 +1,8 @@
 # TODO: Update changelog
+v4.1.0 - Minor Release
+ - Added emoji support with emoji selector.
+ - Reorganized message compose panel and made send button an icon.
+
 v4.0.2 - Minor Release
  - Added "About" page.
  - Fixed chat messages not honoring new lines
