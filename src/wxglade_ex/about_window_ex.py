@@ -4,7 +4,6 @@ import wx.html
 
 from scripts import GlobalVars
 from wxglade import AboutWindow
-from wxglade_ex import EditColorsWindowEx
 
 # https://docs.wxpython.org/richtextctrl_overview.html
 class AboutWindowEx(AboutWindow):

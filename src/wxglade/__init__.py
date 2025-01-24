@@ -15,5 +15,6 @@ __all__ = [
     'EditColorsWindow',
     'EmojiSelectorWindow',
     'ImageViewerWindow',
-    'AboutWindow'
+    'AboutWindow',
+    'EastereggWindow'
 ]

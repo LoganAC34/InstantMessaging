@@ -75,9 +75,7 @@ class MainWindowEx(MainWindow):
 
         # Initialize emoji selector
         self.EmojisWindow = EmojiSelectorWindowEx(self)
-        emoji_files = list(GlobalVars.emoji_directory.glob('*.png'))
-        if emoji_files:
-            self.emoji_keyboard.SetBitmap(wx.Bitmap(str(emoji_files[0])))
+        self.emoji_keyboard.SetBitmap(wx.Bitmap(str(os.path.join(GlobalVars.path_resources, 'emoji_keyboard_icon.png'))))
 
         self.EasterEggWindow = None
         self.characters = 0

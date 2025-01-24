@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 import sys
 from datetime import date
 
@@ -51,3 +52,7 @@ PyInstaller.__main__.run([
 ])
 
 shutil.rmtree(dst)
+
+pigar_script = (f'cd {dir_PyCharm} '
+                f'&& {sys.executable} -m pigar generate --question-answer no')
+subprocess.run(pigar_script, cwd=dir_PyCharm, shell=True)
