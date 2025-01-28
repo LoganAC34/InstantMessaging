@@ -23,7 +23,7 @@ import wx.richtext
 
 from scripts import config, SocketWorkerThread, GlobalVars
 from wxglade import MainWindow
-from wxglade_ex import EastereggWindowEx, SettingsWindowEx, EmojiSelectorWindowEx
+from wxglade_ex import EastereggWindowEx, SettingsWindowEx, EmojiSelectorWindowEx, ImageViewerWindowEx
 
 drop_event, EVT_DROP_EVENT = wx.lib.newevent.NewEvent()
 
@@ -72,6 +72,7 @@ class MainWindowEx(MainWindow):
         self.sent_to = ''
         self.previous_sender = None
         self.SettingsWindow = None
+        self.ImageViewer = None
 
         # Initialize emoji selector
         self.EmojisWindow = EmojiSelectorWindowEx(self)
@@ -329,8 +330,13 @@ class MainWindowEx(MainWindow):
             # print(data['wheel'])
             pass
         elif 'imageClick' in data:
-            print(data['imageClick'])
-            pass
+            #print(data['imageClick'])
+            print("Image click")
+            if not self.ImageViewer:
+                self.ImageViewer = ImageViewerWindowEx(self)
+
+            self.ImageViewer.change_image(data['imageClick'])
+            self.ImageViewer.Show()
 
     def AppendMessage(self, username, message):
         self.AppendUsername(username)
