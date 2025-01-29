@@ -5,6 +5,9 @@ import wx
 from wxglade import ImageViewerWindow
 from wx.lib.floatcanvas import FloatCanvas
 
+# https://docs.wxpython.org/wx.lib.floatcanvas.FCObjects.ScaledBitmap.html#wx.lib.floatcanvas.FCObjects.ScaledBitmap.CalcBoundingBox
+# https://discuss.wxpython.org/t/imagepanel-with-autofit-and-zoom/35528/2
+# https://docs.wxpython.org/wx.lib.floatcanvas.FloatCanvas.FloatCanvas.html#wx.lib.floatcanvas.FloatCanvas.FloatCanvas.MoveImage
 
 class ImageViewerWindowEx(ImageViewerWindow):
     def __init__(self, *args, **kwds):
@@ -48,7 +51,7 @@ class ImageViewerWindowEx(ImageViewerWindow):
             self.Canvas.ScreenPosition
             self.Canvas.ScreenRect.Width
             self.Canvas.ScreenRect.Height
-            self.bitmap.BoundingBox.X
+            #self.bitmap.BoundingBox.X
             self.bitmap.ScaledBitmap.ScaledWidth
             self.bitmap.ScaledBitmap.ScaledHeight
             new_pos = wx.GetMousePosition()

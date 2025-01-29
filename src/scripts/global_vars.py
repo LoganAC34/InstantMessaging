@@ -10,7 +10,7 @@ class GlobalVars(object):
     APP_NAME = 'Local Instant Messenger'
     APP_NAME_UNDERSCORE = APP_NAME.replace(' ', '_')
     PUBLISHER = 'OrangeByte'
-    VERSION = 'v4.1.1'
+    VERSION = 'v4.1.2'
     PYTHON_BUILD_VERSION = f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}'
     GITHUB_REPO_LINK = 'https://github.com/LoganAC34/InstantMessaging'
     AUTHOR = 'LoganAC34'
