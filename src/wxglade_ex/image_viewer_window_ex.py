@@ -2,6 +2,8 @@ import base64
 from io import BytesIO
 
 import wx
+
+from scripts import GlobalVars
 from wxglade import ImageViewerWindow
 from wx.lib.floatcanvas import FloatCanvas
 
@@ -21,8 +23,11 @@ class ImageViewerWindowEx(ImageViewerWindow):
         self.last_pos = None
         self.image_scale = 1
         self.image_scale_scroll_factor = 1.5
+        self.image_position = wx.Point(0, 0)
 
-        self.Layout()
+        if GlobalVars.debug:
+            self.dev_info.Show(True)
+            self.dev_info.SetLabel("")
 
     def change_image(self, image_data:str):
         # https://stackoverflow.com/questions/58145240/is-there-any-possible-way-how-to-show-image-from-base64-data-in-wxpython-app
@@ -52,13 +57,24 @@ class ImageViewerWindowEx(ImageViewerWindow):
             self.Canvas.ScreenRect.Width
             self.Canvas.ScreenRect.Height
             #self.bitmap.BoundingBox.X
-            self.bitmap.ScaledBitmap.ScaledWidth
-            self.bitmap.ScaledBitmap.ScaledHeight
+
             new_pos = wx.GetMousePosition()
             dx = self.last_pos.x - new_pos.x
             dy = self.last_pos.y - new_pos.y
+            self.image_position.x += dx
+            self.image_position.y += dy
             self.Canvas.MoveImage((dx, dy), "Pixel")
             self.last_pos = new_pos
+
+        if GlobalVars.debug:
+            mouse_x, mouse_y = self.Canvas.ScreenToClient(event.GetPosition())
+            image_position_x_max = self.image_position.x + self.bitmap.ScaledBitmap.ScaledWidth
+            image_position_y_max = self.image_position.y + self.bitmap.ScaledBitmap.ScaledHeight
+            canvas_position_x_max = self.Canvas.ScreenPosition.x + self.Canvas.ScreenRect.Width
+            canvas_position_y_max = self.Canvas.ScreenPosition.y + self.Canvas.ScreenRect.Height
+            self.dev_info.SetLabel(f"mouse pos: {mouse_x}, {mouse_y} | "
+                                   f"{self.image_position.x}, {self.image_position.y}, {image_position_x_max}, {image_position_y_max} | "
+                                   f"{canvas_position_x_max}, {canvas_position_y_max}")
 
     def on_left_up(self, event):
         self.dragging = False
