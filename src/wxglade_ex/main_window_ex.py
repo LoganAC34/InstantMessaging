@@ -361,7 +361,7 @@ class MainWindowEx(MainWindow):
         self.html_chat_log.RunScript(rf'window.insertImage("{image}")')
 
     def EasterEgg(self, event):
-        if GlobalVars.debug and not self.EasterEggWindow:
+        if not self.EasterEggWindow: #and GlobalVars.debug:
             self.EasterEggWindow = EastereggWindowEx(self)
             self.EasterEggWindow.Show()
             event.Skip()
